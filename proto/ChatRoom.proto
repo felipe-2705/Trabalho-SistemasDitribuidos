@@ -1,0 +1,40 @@
+//chat proto file
+
+syntax = "proto3";
+
+
+message JoinChatRequest{
+  string roomname = 1;
+  string password = 2;
+}
+
+message CreateChatRequest{
+  string roomname = 1;
+  string password = 2;
+}
+
+message NicknameRequest{
+   string nickname = 1;
+
+}
+
+message SendMessage{
+  string nickname =1;
+  string message =2;
+}
+
+message EmptyResponse{}
+
+message StateResponse{
+   string state = 1;
+
+}
+
+
+service ChatService{
+ rpc JoinChat(JoinChatRequest) returns(stream SendMessage){}
+ rpc sendMenssage(SendMessage) returns(EmptyResponse){}
+ rpc CreateChat(CreateChatRequest) returns(StateResponse){}
+ rpc informNickname(NicknameRequest) returns(StateResponse){}
+
+}
