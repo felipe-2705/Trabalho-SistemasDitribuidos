@@ -34,6 +34,9 @@ Cliente:
 
 -> Receber e enviar mensagens de maneira concorrente;
 
+Banco de Dados:
+implementado a mao; Basicamente um log que guarda as mensagens da sala em um arquivo. cada sala em um arquivo diferente, também possui os nicknames de todos os participantes
+
 Mensagens{
      'nickname':'nome',
      'mensagem': 'Texto'       

@@ -2,7 +2,6 @@
 
 
 import socket
-import random
 import threading
 
 host = socket.gethostname()
@@ -23,8 +22,8 @@ def connect_to_server():
     s= socket.socket()
     s.connect((s_ip,port)) # conecta ao servidor
     # tenta conectar a alguma sala no servidor
-    s.send(Room.encode())
-    s.send(password.encode())
+    s.send(Room)
+    s.send(password)
     rsp = s.recv(1024) # a rsp sera a porta da room ou pode ser Invalid  indicando que o nome ou a senha estao incorretos
     s.close()
     return rsp
