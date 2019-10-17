@@ -33,6 +33,7 @@ class ChatServer(rpc.ChatSServerServicer):
             self.NextRoom_port+=1
             lock.release()
             port = newroom.Join(self,request.nickname)
+            print("Room:" + request.roomname + "was created on port:"+str(port))
             return chat.JoinResponse(state = 'sucess',Port = port)
         else:
             return None;
@@ -42,6 +43,7 @@ class ChatServer(rpc.ChatSServerServicer):
         if room != None:
             port =room.Join(request.nickname)
             if port != None:
+                print(request.nickname +' joined ' + request.roomname)
                 return chat.JoinResponse(state = 'sucess', Port = port)
 
         return chat.JoinResponse(state = 'fail',Port = None)
@@ -80,6 +82,7 @@ class ChatRoom(rpc.ChatRoomServicer):
         self.lock.acquire()
         self.Chats.append(request)
         self.lock.release()
+        print('Message received from: '+request.nickname)
         return chat.EmptyResponse()
 
     def ReceiveMessage(self,request_iterator,context):

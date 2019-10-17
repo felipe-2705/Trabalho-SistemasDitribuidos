@@ -1,42 +1,61 @@
 #!/usr/bin/python3
 
-
-import socket
 import threading
+import grpc
+from threading import Lock
+import sys
+sys.path.append('../')
+from proto import ChatRoom_pb2_grpc as rpc
+from proto import ChatRoom_pb2  as chat
 
-host = socket.gethostname()
-my_ip= socket.gethostbyname(host)
-port = 16161
-s_ip = '192.168.100.9'
-Room = ""
-password=""
-Invalid = 00000
-Mensagens=[] # Lista de todas as mensagens na Sala ate o momento; è necessario para a reimpressao de todas as mensagens
+address= '192.168.100.9'
+port = 11912
 
-def RoomPass()
-    Room = input('Room name:')
-    password = input('password')
+class Client:
+    def __init__(self):
+        channel = grpc.insecure_channel(address + ':' +str(port))
+        self.conn = rpc.ChatSServerStub(channel)  ## connection with the server
+        self.lock = Lock()
+        self.chats =[]                    ## lock to chats list
+    def Join_to_chatRoom(self,Roomname,Password,Nickname):
+        response = self.conn.JoinChat(chat.JoinChatRequest(roomname =Roomname, password = Password, nickname = Nickname))
+        if response.state == 'sucess':
+            self.Nickname = Nickname
+            self.chats.clear()  ## remove any old chat that could be in the chat list
+            room_channel = grpc.insecure_channel(address+':'+str(response.Port))
+            self.roomconn = rpc.ChatRoomStub(room_channel)
+            threading.Thread(target=self.__listen_for_messages,daemon =True).start()
+            return True
+        else:
+            return False
+    def Create_chatRoom(self,Roomname,Password,Nickname):
+        response = self.conn.CreateChat(chat.CreateChatRequest(roomname = Roomname, password = Password,nickname = Nickname))
+        if response.state == 'sucess':
+            self.Nickname = Nickname
+            self.chats.clear()
+            room_channel = grpc.insecure_channel(address+':'+str(response.Port))
+            self.roomconn = rpc.ChatRoomStub(room_channel)
+            threading.Thread(target=self.__listen_for_messages,daemon=True).start()
+            return True
+        else:
+            return False
 
-def connect_to_server():
-    global port
-    s= socket.socket()
-    s.connect((s_ip,port)) # conecta ao servidor
-    # tenta conectar a alguma sala no servidor
-    s.send(Room)
-    s.send(password)
-    rsp = s.recv(1024) # a rsp sera a porta da room ou pode ser Invalid  indicando que o nome ou a senha estao incorretos
-    s.close()
-    return rsp
+    def Send_message(self,Message):
+        if Message != '':
+            n = chat.Note(nickname = self.Nickname,message = Message)
+            self.roomconn.SendMessage(n)
+            lock.acquire()
+            self.chats.append(n)
+            lock.release()
 
+    def __listen_for_messages(self):
+        lock.acquire()
+        for note in self.roomconn.ReceiveMessage(chat.EmptyResponse()):
+            self.chats.append(note)
+        lock.release()
 
-
-# Enquanto nao connectar a uma sala valida continua
-while True:
-    os.system('clear')
-    RoomPass()
-    connect = connect_to_server()
-    if connect == Invalid:
-        continue
-    else:
-        port = connect
-        break
+    def getchat(self,index):
+         n =self.chats[index]
+         return n
+    def getchat_len(self):
+         return len(self.chats)
