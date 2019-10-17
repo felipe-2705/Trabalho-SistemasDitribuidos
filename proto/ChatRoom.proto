@@ -2,39 +2,46 @@
 
 syntax = "proto3";
 
+package grpc;
 
 message JoinChatRequest{
   string roomname = 1;
   string password = 2;
+  string nickname = 3;
 }
 
 message CreateChatRequest{
   string roomname = 1;
   string password = 2;
+  string nickname = 3;
 }
 
-message NicknameRequest{
-   string nickname = 1;
-
-}
-
-message SendMessage{
+message Note{
   string nickname =1;
   string message =2;
 }
 
 message EmptyResponse{}
 
-message StateResponse{
+message JoinResponse{
    string state = 1;
+   int32 Port =2;
 
 }
 
+message QuitRequest{
+  string nickname=1;
+}
 
-service ChatService{
- rpc JoinChat(JoinChatRequest) returns(stream SendMessage){}
- rpc sendMenssage(SendMessage) returns(EmptyResponse){}
- rpc CreateChat(CreateChatRequest) returns(StateResponse){}
- rpc informNickname(NicknameRequest) returns(StateResponse){}
 
+service ChatSServer{
+ rpc JoinChat(JoinChatRequest) returns(JoinResponse){}
+ rpc CreateChat(CreateChatRequest) returns(JoinResponse){}
+
+}
+
+service ChatRoom{
+ rpc ReceiveMessage(EmptyResponse) returns(stream Note){}
+ rpc SendMessage(Note) returns(EmptyResponse){}
+ rpc Quit(QuitRequest) returns(EmptyResponse){}
 }
