@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import Cliente
+import threading
+from tkinter import messagebox
 
 cliente = Cliente.Client()
 class option_menu:
@@ -28,16 +30,16 @@ class option_menu:
         self.password = self.passentry.get()
         self.nickname = self.nickentry.get()
         if not cliente.Create_chatRoom(self.roomname,self.password,self.nickname):
-            tk.messagebox.showerror('ERRO','Room was not Possible to Create')
+            messagebox.showerror('ERRO','Room was not Possible to Create')
         else:
             ct = chatRoom(self.nickname,self.roomname)
     def join(self):
         global cliente
         self.roomname = self.roomentry.get()
         self.password = self.passentry.get()
-        self.nickmane = self.nickentry.get()
+        self.nickname = self.nickentry.get()
         if not cliente.Join_to_chatRoom(self.roomname,self.password, self.nickname):
-            tk.messagebox.showerror('ERRO','Room was not Possible to Join')
+            messagebox.showerror('ERRO','Room was not Possible to Join')
         else:
             ct = chatRoom(self.nickname,self.roomname)
     def visible(self,bool):
@@ -63,7 +65,7 @@ class chatRoom:
         global cliente
         mensagem = self.entrada.get()
         if mensagem != "":
-            self.cliente.Send_message(mensagem)
+            cliente.Send_message(mensagem)
             self.text.configure(state = "normal")
             self.text.insert(tk.INSERT,'['+self.nickname +']'+ ' '+mensagem + '\n')
             self.text.configure(state = "disabled")

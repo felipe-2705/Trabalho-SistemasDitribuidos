@@ -49,10 +49,10 @@ class Client:
             lock.release()
 
     def __listen_for_messages(self):
-        lock.acquire()
+        self.lock.acquire()
         for note in self.roomconn.ReceiveMessage(chat.EmptyResponse()):
             self.chats.append(note)
-        lock.release()
+        self.lock.release()
 
     def getchat(self,index):
          n =self.chats[index]
