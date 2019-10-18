@@ -8,7 +8,7 @@ sys.path.append('../')
 from proto import ChatRoom_pb2_grpc as rpc
 from proto import ChatRoom_pb2  as chat
 
-address= '192.168.100.9'
+address= 'localhost'
 port = 11912
 
 class Client:

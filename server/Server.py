@@ -25,8 +25,9 @@ class ChatServer(rpc.ChatSServerServicer):
         lock.release()
         return None
 
-    def CreateChat(self,request: chat.CreateChatRequest,context):
+    def CreateChat(self,request,context):
         if self.Validade_Room(request.roomname,request.password) == None:
+            print('Room validate')
             newroom = ChatRoom(self.NextRoom_port,request.roomname,request.password)
             lock.acquire()
             self.ChatRooms.append(newroom)
@@ -61,7 +62,7 @@ class ChatRoom(rpc.ChatRoomServicer):
         Roomserver = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         rpc.add_ChatRoomServicer_to_server(self,Roomserver)
         print('Starting new Chat room, listenning ...')
-        Roomserver.add_insecure_port('[::]:'+ str(self.Port))
+        server.add_insecure_port('[::]:'+ str(self.Port))
     def validate_name(self,Roomname):
         if Roomname == self.Name:
             return True;
@@ -127,5 +128,5 @@ if __name__ == '__main__':
     server.add_insecure_port('[::]:'+str(chatServer.getPort()))
 
    ## the other threads will work this one just need to start others and sleep
-    while True:
-        time.sleep(64*64*100)
+while True:
+    time.sleep(64*64*100)
