@@ -7,8 +7,9 @@ import sys
 sys.path.append('../')
 from proto import ChatRoom_pb2_grpc as rpc
 from proto import ChatRoom_pb2  as chat
+import time
 
-address= 'localhost'
+address= '0.0.0.0'
 port = 11912
 
 class Client:
@@ -33,8 +34,11 @@ class Client:
         if response.state == 'sucess':
             self.Nickname = Nickname
             self.chats.clear()
+            print(response)
             room_channel = grpc.insecure_channel(address+':'+str(response.Port))
             self.roomconn = rpc.ChatRoomStub(room_channel)
+            print(self.roomconn)
+            print(self.conn)
             threading.Thread(target=self.__listen_for_messages,daemon=True).start()
             return True
         else:
@@ -43,6 +47,7 @@ class Client:
     def Send_message(self,Message):
         if Message != '':
             n = chat.Note(nickname = self.Nickname,message = Message)
+            print(n)
             self.roomconn.SendMessage(n)
             lock.acquire()
             self.chats.append(n)
