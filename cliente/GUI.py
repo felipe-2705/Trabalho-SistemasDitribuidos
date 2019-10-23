@@ -61,14 +61,18 @@ class chatRoom:
         self.entrada.grid(row=1,column=0,columnspan=3)
         self.send_btn = tk.Button(self.window,text ="Send",command = self.sendmsg).grid(row=1,column=3,columnspan=2)
         threading.Thread(target=self.ReceiveMenssagem,daemon=True).start()  ## thread to print incoming menssages
+        self.lock=threading.Lock()
+
     def sendmsg(self):
         global cliente
         mensagem = self.entrada.get()
         if mensagem != "":
             cliente.Send_message(mensagem)
+            self.lock.acquire()
             self.text.configure(state = "normal")
             self.text.insert(tk.INSERT,'['+self.nickname +']'+ ' '+mensagem + '\n')
             self.text.configure(state = "disabled")
+            self.lock.release()
 
     def ReceiveMenssagem(self):
         global cliente
@@ -85,9 +89,11 @@ class chatRoom:
             self.window.withdraw()
     def insertMsg(self,Msg):
         if Msg != "":
+            self.lock.acquire()
             self.text.configure(state = "normal")
             self.text.insert(tk.Insert,Msg+'\n')
             self.text.configure(state = "disabled")
+            self.lock.release()
 
 if __name__ == '__main__':
     print('Starting Client...')

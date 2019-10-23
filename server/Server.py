@@ -37,7 +37,7 @@ class ChatServer(rpc.ChatSServerServicer):
             print('Server: pipe created ...')
             p = mp.Process(target= room.Room_start,args=(request.roomname,request.password,w,))
             print('Server: Room process created')
-            p.run()
+            Thread(target=run_room,args(p,),daemon=True).start()
             r = os.fdopen(r)
             print('Server: Pipe Read')
             port_s = r.read()
@@ -63,6 +63,8 @@ class ChatServer(rpc.ChatSServerServicer):
         return self.Request_port
 
 
+def run_room(p):
+    p.run()
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ class Client:
         self.conn = rpc.ChatSServerStub(channel)  ## connection with the server
         self.lock = Lock()
         self.chats =[]                    ## lock to chats list
+        
     def Join_to_chatRoom(self,Roomname,Password,Nickname):
         response = self.conn.JoinChat(chat.JoinChatRequest(roomname =Roomname, password = Password, nickname = Nickname))
         if response.state == 'sucess':
@@ -29,6 +30,7 @@ class Client:
             return True
         else:
             return False
+
     def Create_chatRoom(self,Roomname,Password,Nickname):
         response = self.conn.CreateChat(chat.CreateChatRequest(roomname = Roomname, password = Password,nickname = Nickname))
         if response.state == 'sucess':
@@ -49,9 +51,9 @@ class Client:
             n = chat.Note(nickname = self.Nickname,message = Message)
             print(n)
             self.roomconn.SendMessage(n)
-            lock.acquire()
+            self.lock.acquire()
             self.chats.append(n)
-            lock.release()
+            self.lock.release()
 
     def __listen_for_messages(self):
         self.lock.acquire()
