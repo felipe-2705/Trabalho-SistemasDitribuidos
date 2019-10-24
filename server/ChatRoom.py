@@ -37,11 +37,8 @@ class ChatRoom(rpc.ChatRoomServicer):
 
     ## method to a  client send a message to chatroom
     def SendMessage(self,request,context):
-        self.lock.acquire()
         self.Chats.append(request)
-        self.lock.release()
         print('ChatRoom: Message received from: '+request.nickname)
-        print(request.message)
         return chat.EmptyResponse()
 
     def ReceiveMessage(self,request_iterator,context):
@@ -51,16 +48,12 @@ class ChatRoom(rpc.ChatRoomServicer):
         # send all new messages to clients
         while True:
             while lastindex < len(self.Chats):
-                self.lock.acquire()
                 n = self.Chats[lastindex]
-                self.lock.release()
                 lastindex+=1
                 yield n
 
     def Quit(self,request, context):
-        self.locknick.acquire()
         self.Nicknames.remove(request.nickname)
-        self.locknick.release()
 
     def Join(self,Nickname):
         ## See if there are any User with the same requested nick

@@ -36,11 +36,8 @@ class Client:
         if response.state == 'sucess':
             self.Nickname = Nickname
             self.chats.clear()
-            print(response)
             room_channel = grpc.insecure_channel(address+':'+str(response.Port))
             self.roomconn = rpc.ChatRoomStub(room_channel)
-            print(self.roomconn)
-            print(self.conn)
             threading.Thread(target=self.__listen_for_messages,daemon=True).start()
             return True
         else:
@@ -49,14 +46,13 @@ class Client:
     def Send_message(self,Message):
         if Message != '':
             n = chat.Note(nickname = self.Nickname,message = Message)
-            print(n)
             self.roomconn.SendMessage(n)
-            self.chats.append(n)
+
 
     def __listen_for_messages(self):
         for note in self.roomconn.ReceiveMessage(chat.EmptyResponse()):
             self.chats.append(note)
-    
+
     def getchat(self,index):
          n =self.chats[index]
          return n
