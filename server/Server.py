@@ -8,6 +8,7 @@ from proto import ChatRoom_pb2  as chat
 import grpc
 import time
 from threading import Lock
+from threading import Thread
 from server import ChatRoom as room
 import multiprocessing as mp
 import os
@@ -37,7 +38,7 @@ class ChatServer(rpc.ChatSServerServicer):
             print('Server: pipe created ...')
             p = mp.Process(target= room.Room_start,args=(request.roomname,request.password,w,))
             print('Server: Room process created')
-            Thread(target=run_room,args(p,),daemon=True).start()
+            Thread(target=run_room,args=(p,),daemon=True).start()
             r = os.fdopen(r)
             print('Server: Pipe Read')
             port_s = r.read()

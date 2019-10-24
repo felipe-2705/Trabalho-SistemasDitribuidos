@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import scrolledtext
 import Cliente
 import threading
+import multiprocessing as mp
 from tkinter import messagebox
 
 cliente = Cliente.Client()
@@ -24,6 +25,7 @@ class option_menu:
 
     def windowStart(self):
         self.window.mainloop()
+
     def create(self):
         global cliente
         self.roomname = self.roomentry.get()
@@ -33,6 +35,7 @@ class option_menu:
             messagebox.showerror('ERRO','Room was not Possible to Create')
         else:
             ct = chatRoom(self.nickname,self.roomname)
+
     def join(self):
         global cliente
         self.roomname = self.roomentry.get()
@@ -42,6 +45,7 @@ class option_menu:
             messagebox.showerror('ERRO','Room was not Possible to Join')
         else:
             ct = chatRoom(self.nickname,self.roomname)
+
     def visible(self,bool):
         if bool == True:
             self.window.deiconify()
@@ -60,7 +64,8 @@ class chatRoom:
         self.entrada = tk.Entry(self.window)
         self.entrada.grid(row=1,column=0,columnspan=3)
         self.send_btn = tk.Button(self.window,text ="Send",command = self.sendmsg).grid(row=1,column=3,columnspan=2)
-        threading.Thread(target=self.ReceiveMenssagem,daemon=True).start()  ## thread to print incoming menssages
+        mp.set_start_method('fork')
+        mp.Process(target= ReceiveMenssagem,args=(self,)).start()  ## thread to print incoming menssages
         self.lock=threading.Lock()
 
     def sendmsg(self):
@@ -68,32 +73,31 @@ class chatRoom:
         mensagem = self.entrada.get()
         if mensagem != "":
             cliente.Send_message(mensagem)
-            self.lock.acquire()
             self.text.configure(state = "normal")
             self.text.insert(tk.INSERT,'['+self.nickname +']'+ ' '+mensagem + '\n')
             self.text.configure(state = "disabled")
-            self.lock.release()
-
-    def ReceiveMenssagem(self):
-        global cliente
-        lastindex = 0
-        while True:
-            while lastindex < cliente.getchat_len():
-                n = cliente.getchat(lastindex)
-                self.insertMsg('['+ n.nickname+'] '+n.message+'\n')
 
     def visible(self,bool):
         if bool == True:
             self.window.deiconify()
         else:
             self.window.withdraw()
+
     def insertMsg(self,Msg):
         if Msg != "":
-            self.lock.acquire()
             self.text.configure(state = "normal")
-            self.text.insert(tk.Insert,Msg+'\n')
+            self.text.insert(tk.INSERT,Msg+'\n')
             self.text.configure(state = "disabled")
-            self.lock.release()
+
+
+
+def ReceiveMenssagem(inter):
+    global cliente
+    lastindex = 0
+    while True:
+        while lastindex < cliente.getchat_len():
+            n = cliente.getchat(lastindex)
+            inter.insertMsg('['+ n.nickname+'] '+n.message+'\n')
 
 if __name__ == '__main__':
     print('Starting Client...')
