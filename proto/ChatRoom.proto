@@ -25,8 +25,7 @@ message EmptyResponse{}
 
 message JoinResponse{
    string state = 1;
-   int32 Port =2;
-
+   int32 Port =2;S
 }
 
 message QuitRequest{
@@ -37,7 +36,6 @@ message QuitRequest{
 service ChatSServer{
  rpc JoinChat(JoinChatRequest) returns(JoinResponse){}
  rpc CreateChat(CreateChatRequest) returns(JoinResponse){}
-
 }
 
 service ChatRoom{
