@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import json
 import queue
 import time
 
@@ -17,13 +18,13 @@ class State_file:
 	#	  - Each process create a thread to write the file
 	#	  - All the process have a shared lock
 	def __init__(self,shared_lock):
-		self.f_name = "/home/adriano/GitHub/SD/Trabalho-SistemasDitribuidos/server/server_state.in"
+		self.f_name = "/home/adriano/GitHub/SD/Trabalho-SistemasDitribuidos/server/server_logs.in"
+		self.f_snap = "/home/adriano/GitHub/SD/Trabalho-SistemasDitribuidos/server/server_snap.in"
 		self.lock   = shared_lock
 #		self.queue  = queue.Queue()
 		self.queue  = []
-#		fd = open(self.f_name,"r+") # We have to thrust the file exists
-#		fd.close()
 	
+	# If there is a need for timestamp this is where it should be used
 	def stack_log(self,message):
 		print("Append")
 		self.queue.append(message)
@@ -43,6 +44,23 @@ class State_file:
 			# if :
 			#	break
 
+	# Operation is a stirng
+	def write_log(self,operation):
+		fd = open(self.f_name,"a+")
+		fd.write(str(operation) + "\n")
+		fd.close()
+
+	def take_snapshot(self,state):
+		self.lock.acquire()
+
+		fd = open(self.f_snap,"a+")
+		json.dump(state,fd)
+		fd.write("\n")
+		fd.close()
+
+		self.lock.release()
+
+
 #	# Maybe this function will be changed to put a timer in the message
 #	def stack_log(self,message):
 #		self.queue.put(message)
@@ -54,13 +72,6 @@ class State_file:
 #			self.queue.task_done()
 #			#if :
 #			#	break
-
-	# Operation is a stirng
-	# It will be changed if theres a need to struct the data
-	def write_log(self,operation):
-		fd = open(self.f_name,"a")
-		fd.write(str(operation) + "\n")
-		fd.close()
 
 #	def data_snapshot(self,operation):
 
