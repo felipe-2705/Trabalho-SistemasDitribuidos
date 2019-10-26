@@ -1,6 +1,25 @@
 # Trabalho-SistemasDitribuidos
 
 
+## Entrega 2
+
+* (X) Toda a comunicaco devera ser substituida por gRPC;
+* (X) A operacao a ser executada deve ser definida pela funcao, nao por parametro;
+* ( ) O estado armazenado no servidor deve ser composto por log + snapshots dos dados;
+* ( ) Um texto de ate uma pagina explicando como e porque Log Structured Merge Trees seriam usadas no projeto;
+* Outros elementos dependerao de cada trabalho, com duas opcoes:
+	- 1 :
+		* ( ) O servidor sera particionado usando consistent hashing;
+		* ( ) O roteamento entre pares sera feito via finger table;
+		* ( ) Os dados serao particionados usando alguma chave que os identifique;
+	- 2 :
+		* O servidor sera particionado usando microsservicos;
+		* Varios microsservicos srao usados no sistema;
+		* Os dados serao roteados segundo alguma tabela pre-configurada;
+
+
+## Visão Geral
+
 Servidor:
 
 - Requisitos Funcionais:

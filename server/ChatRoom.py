@@ -8,17 +8,24 @@ from proto import ChatRoom_pb2  as chat
 import grpc
 import time
 from threading import Lock
+from threading import Thread
 import os
+from State import *
 
 class ChatRoom(rpc.ChatRoomServicer):
-    def __init__(self,Roomname,password):
-        self.Chats = []            ## Blocking queue to save all chats
-        self.Nicknames = []        ## list of participantes Nicknames
-        #self.Port = Port           ## Port to access this room
-        self.Name = Roomname       ## Room name
-        self.Password = password   ## Password
-        self.lock = Lock()         ## to Block the acess to chats list
-        self.locknick = Lock()     ## to Block Nicknames list
+    def __init__(self,Roomname,password,shared_lock):
+        self.Port = 0           ## Port to access this room
+        self.Chats       = []            ## Blocking queue to save all chats
+        self.Nicknames   = []        ## list of participantes Nicknames
+        self.Name        = Roomname       ## Room name
+        self.Password    = password   ## Password
+        self.lock        = Lock()         ## to Block the acess to chats list
+        self.locknick    = Lock()     ## to Block Nicknames list
+
+        self.state_file  = State_file(shared_lock) # Will use the received shared lock
+
+    def thread_start(self):
+        Thread(target=self.state_file.pop_log).start()          # This thread will be responsible to write changes in the log file
 
     def validate_name(self,Roomname):
         if Roomname == self.Name:
@@ -38,7 +45,8 @@ class ChatRoom(rpc.ChatRoomServicer):
     ## method to a  client send a message to chatroom
     def SendMessage(self,request,context):
         self.Chats.append(request)
-        print('ChatRoom: Message received from: '+request.nickname)
+        self.state_file.stack_log('ChatRoom: Message received from: ' + request.nickname)
+        print('ChatRoom: Message received from: ' + request.nickname)
         return chat.EmptyResponse()
 
     def ReceiveMessage(self,request_iterator,context):
@@ -73,19 +81,24 @@ class ChatRoom(rpc.ChatRoomServicer):
         return self.Port
 
 
-def Room_start(Roomname,password,pipeout):
+def Room_start(Roomname,password,pipeout,shared_lock):
     print('ChatRroom: Room process started ...')
     Roomserver = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    newroom = ChatRoom(Roomname,password)
+    newroom    = ChatRoom(Roomname,password,shared_lock)
+    newroom.thread_start() #Thread will start
+
     rpc.add_ChatRoomServicer_to_server(newroom,Roomserver)
     print('ChatRoom: Starting new Chat room, listenning ...')
     Port=Roomserver.add_insecure_port('[::]:'+ str(0))
     newroom.setport(Port)
+
     w=os.fdopen(pipeout,'w')
     w.write(str(Port))
     w.close()
+
     print('ChatRoom: Pipe Write  ...')
     print('ChatRoom: ' +Roomname+':'+str(Port))
     Roomserver.start();
+
     while True:
         time.sleep(10*10*64)
