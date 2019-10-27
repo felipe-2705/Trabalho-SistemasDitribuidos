@@ -16,21 +16,28 @@ message CreateChatRequest{
   string nickname = 3;
 }
 
+message First{
+  string roomname = 1;
+  string nickname = 2;
+}
+
 message Note{
-  string nickname =1;
-  string message =2;
+  string roomname = 1;
+  string nickname = 2;
+  string message  = 3;
 }
 
 message EmptyResponse{}
 
 message JoinResponse{
    string state = 1;
-   int32 Port =2;
+   int32 Port   = 2;
 
 }
 
 message QuitRequest{
-  string nickname=1;
+  string roomname = 1;
+  string nickname = 2;
 }
 
 
@@ -38,10 +45,7 @@ service ChatSServer{
  rpc JoinChat(JoinChatRequest) returns(JoinResponse){}
  rpc CreateChat(CreateChatRequest) returns(JoinResponse){}
 
-}
-
-service ChatRoom{
- rpc ReceiveMessage(EmptyResponse) returns(stream Note){}
+ rpc ReceiveMessage(First) returns(stream Note){}
  rpc SendMessage(Note) returns(EmptyResponse){}
  rpc Quit(QuitRequest) returns(EmptyResponse){}
 }

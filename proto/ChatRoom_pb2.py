@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='grpc',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x0e\x43hatRoom.proto\x12\x04grpc\"G\n\x0fJoinChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\"I\n\x11\x43reateChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\")\n\x04Note\x12\x10\n\x08nickname\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x0f\n\rEmptyResponse\"+\n\x0cJoinResponse\x12\r\n\x05state\x18\x01 \x01(\t\x12\x0c\n\x04Port\x18\x02 \x01(\x05\"\x1f\n\x0bQuitRequest\x12\x10\n\x08nickname\x18\x01 \x01(\t2\x83\x01\n\x0b\x43hatSServer\x12\x37\n\x08JoinChat\x12\x15.grpc.JoinChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x12;\n\nCreateChat\x12\x17.grpc.CreateChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x32\xa5\x01\n\x08\x43hatRoom\x12\x35\n\x0eReceiveMessage\x12\x13.grpc.EmptyResponse\x1a\n.grpc.Note\"\x00\x30\x01\x12\x30\n\x0bSendMessage\x12\n.grpc.Note\x1a\x13.grpc.EmptyResponse\"\x00\x12\x30\n\x04Quit\x12\x11.grpc.QuitRequest\x1a\x13.grpc.EmptyResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x0e\x43hatRoom.proto\x12\x04grpc\"G\n\x0fJoinChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\"I\n\x11\x43reateChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\"+\n\x05\x46irst\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\";\n\x04Note\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"\x0f\n\rEmptyResponse\"+\n\x0cJoinResponse\x12\r\n\x05state\x18\x01 \x01(\t\x12\x0c\n\x04Port\x18\x02 \x01(\x05\"1\n\x0bQuitRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t2\x96\x02\n\x0b\x43hatSServer\x12\x37\n\x08JoinChat\x12\x15.grpc.JoinChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x12;\n\nCreateChat\x12\x17.grpc.CreateChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x12-\n\x0eReceiveMessage\x12\x0b.grpc.First\x1a\n.grpc.Note\"\x00\x30\x01\x12\x30\n\x0bSendMessage\x12\n.grpc.Note\x1a\x13.grpc.EmptyResponse\"\x00\x12\x30\n\x04Quit\x12\x11.grpc.QuitRequest\x1a\x13.grpc.EmptyResponse\"\x00\x62\x06proto3')
 )
 
 
@@ -116,22 +116,22 @@ _CREATECHATREQUEST = _descriptor.Descriptor(
 )
 
 
-_NOTE = _descriptor.Descriptor(
-  name='Note',
-  full_name='grpc.Note',
+_FIRST = _descriptor.Descriptor(
+  name='First',
+  full_name='grpc.First',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='nickname', full_name='grpc.Note.nickname', index=0,
+      name='roomname', full_name='grpc.First.roomname', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='message', full_name='grpc.Note.message', index=1,
+      name='nickname', full_name='grpc.First.nickname', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -150,7 +150,52 @@ _NOTE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=172,
-  serialized_end=213,
+  serialized_end=215,
+)
+
+
+_NOTE = _descriptor.Descriptor(
+  name='Note',
+  full_name='grpc.Note',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='roomname', full_name='grpc.Note.roomname', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='nickname', full_name='grpc.Note.nickname', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='message', full_name='grpc.Note.message', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=217,
+  serialized_end=276,
 )
 
 
@@ -173,8 +218,8 @@ _EMPTYRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=215,
-  serialized_end=230,
+  serialized_start=278,
+  serialized_end=293,
 )
 
 
@@ -211,8 +256,8 @@ _JOINRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=232,
-  serialized_end=275,
+  serialized_start=295,
+  serialized_end=338,
 )
 
 
@@ -224,8 +269,15 @@ _QUITREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='nickname', full_name='grpc.QuitRequest.nickname', index=0,
+      name='roomname', full_name='grpc.QuitRequest.roomname', index=0,
       number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='nickname', full_name='grpc.QuitRequest.nickname', index=1,
+      number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -242,12 +294,13 @@ _QUITREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=277,
-  serialized_end=308,
+  serialized_start=340,
+  serialized_end=389,
 )
 
 DESCRIPTOR.message_types_by_name['JoinChatRequest'] = _JOINCHATREQUEST
 DESCRIPTOR.message_types_by_name['CreateChatRequest'] = _CREATECHATREQUEST
+DESCRIPTOR.message_types_by_name['First'] = _FIRST
 DESCRIPTOR.message_types_by_name['Note'] = _NOTE
 DESCRIPTOR.message_types_by_name['EmptyResponse'] = _EMPTYRESPONSE
 DESCRIPTOR.message_types_by_name['JoinResponse'] = _JOINRESPONSE
@@ -267,6 +320,13 @@ CreateChatRequest = _reflection.GeneratedProtocolMessageType('CreateChatRequest'
   # @@protoc_insertion_point(class_scope:grpc.CreateChatRequest)
   })
 _sym_db.RegisterMessage(CreateChatRequest)
+
+First = _reflection.GeneratedProtocolMessageType('First', (_message.Message,), {
+  'DESCRIPTOR' : _FIRST,
+  '__module__' : 'ChatRoom_pb2'
+  # @@protoc_insertion_point(class_scope:grpc.First)
+  })
+_sym_db.RegisterMessage(First)
 
 Note = _reflection.GeneratedProtocolMessageType('Note', (_message.Message,), {
   'DESCRIPTOR' : _NOTE,
@@ -304,8 +364,8 @@ _CHATSSERVER = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=311,
-  serialized_end=442,
+  serialized_start=392,
+  serialized_end=670,
   methods=[
   _descriptor.MethodDescriptor(
     name='JoinChat',
@@ -325,34 +385,19 @@ _CHATSSERVER = _descriptor.ServiceDescriptor(
     output_type=_JOINRESPONSE,
     serialized_options=None,
   ),
-])
-_sym_db.RegisterServiceDescriptor(_CHATSSERVER)
-
-DESCRIPTOR.services_by_name['ChatSServer'] = _CHATSSERVER
-
-
-_CHATROOM = _descriptor.ServiceDescriptor(
-  name='ChatRoom',
-  full_name='grpc.ChatRoom',
-  file=DESCRIPTOR,
-  index=1,
-  serialized_options=None,
-  serialized_start=445,
-  serialized_end=610,
-  methods=[
   _descriptor.MethodDescriptor(
     name='ReceiveMessage',
-    full_name='grpc.ChatRoom.ReceiveMessage',
-    index=0,
+    full_name='grpc.ChatSServer.ReceiveMessage',
+    index=2,
     containing_service=None,
-    input_type=_EMPTYRESPONSE,
+    input_type=_FIRST,
     output_type=_NOTE,
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
     name='SendMessage',
-    full_name='grpc.ChatRoom.SendMessage',
-    index=1,
+    full_name='grpc.ChatSServer.SendMessage',
+    index=3,
     containing_service=None,
     input_type=_NOTE,
     output_type=_EMPTYRESPONSE,
@@ -360,16 +405,16 @@ _CHATROOM = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='Quit',
-    full_name='grpc.ChatRoom.Quit',
-    index=2,
+    full_name='grpc.ChatSServer.Quit',
+    index=4,
     containing_service=None,
     input_type=_QUITREQUEST,
     output_type=_EMPTYRESPONSE,
     serialized_options=None,
   ),
 ])
-_sym_db.RegisterServiceDescriptor(_CHATROOM)
+_sym_db.RegisterServiceDescriptor(_CHATSSERVER)
 
-DESCRIPTOR.services_by_name['ChatRoom'] = _CHATROOM
+DESCRIPTOR.services_by_name['ChatSServer'] = _CHATSSERVER
 
 # @@protoc_insertion_point(module_scope)

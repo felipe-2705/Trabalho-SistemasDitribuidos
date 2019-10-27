@@ -36,6 +36,7 @@ class State_file:
 				self.lock.acquire()
 
 				log = self.queue.pop(0)
+				print(log)
 				self.write_log(log)
 
 				self.lock.release()
