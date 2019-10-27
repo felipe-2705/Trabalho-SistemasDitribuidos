@@ -32,7 +32,6 @@ message EmptyResponse{}
 message JoinResponse{
    string state = 1;
    int32 Port   = 2;
-
 }
 
 message QuitRequest{
