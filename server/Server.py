@@ -26,21 +26,18 @@ class ChatServer(rpc.ChatSServerServicer):
 
 		room = self.Validade_Room(request.roomname,request.password)
 		if room != None:
-			if room.validade_user(request.nickname):
+			if not room.validate_user(request.nickname):
 				room.Join(request.nickname)
-				print(request.nickname + ' joined ' + request.roomname) # This message
 				state_file.stack_log(request.nickname + ' joined ' + request.roomname)
 
-				return chat.JoinResponse(state = 'sucess',Port = None)
-
-		return chat.JoinResponse(state = 'fail',Port = None)
+				return chat.JoinResponse(state = 'sucess',Port = 0)
+		return chat.JoinResponse(state = 'fail',Port = 0)
 
 	# It will write in the log_file
 	def CreateChat(self,request,context):
 		global state_file
 
 		if self.Validade_Room(request.roomname,request.password) == None:
-			print('Server: Room validate')
 			newroom = room.ChatRoom(request.roomname,request.password,state_file.lock) # Chatroom receive
 			newroom.Join(request.nickname)
 
@@ -67,11 +64,12 @@ class ChatServer(rpc.ChatSServerServicer):
 
 	## method to a  client send a message to chatroom
 	def SendMessage(self,request,context):
+		global state_file
+
 		aux = self.Validade_User(request.roomname,request.nickname) 
 		if aux != None:
 			aux.Chats.append(request)
-			self.state_file.stack_log('ChatRoom: Message received from: ' + request.nickname)
-			print('ChatRoom: Message received from: ' + request.nickname)
+			state_file.stack_log('ChatRoom ' + request.roomname + ': Message received from: ' + request.nickname)
 
 		return chat.EmptyResponse()
 
@@ -80,22 +78,23 @@ class ChatServer(rpc.ChatSServerServicer):
 		if aux != None:
 			aux.Nicknames.remove(request.nickname)
 
-	def Validade_User(self,rommname,user):
+	def Validade_User(self,roomname,user):
+		aux = None
 		self.lock.acquire()   ### multiple threas may acess this method at same time. though they cant do it currently
 		for rooms in self.ChatRooms:
 			if rooms.validate_name(roomname) and rooms.validate_user(user):
-				return rooms
+				aux = rooms
 		self.lock.release()
-		return None
+		return aux
 
 	def Validade_Room(self,Roomname,password):
+		aux = None
 		self.lock.acquire()   ### multiple threas may acess this method at same time. though they cant do it currently
 		for rooms in self.ChatRooms:
 			if rooms.validate_name(Roomname) and rooms.validate_pass(password):
-				return rooms
+				aux = rooms
 		self.lock.release()
-		return None
-
+		return aux
 
 	def getPort(self):
 		return self.Request_port

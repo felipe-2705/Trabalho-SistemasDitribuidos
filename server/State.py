@@ -18,27 +18,24 @@ class State_file:
 	#	  - Each process create a thread to write the file
 	#	  - All the process have a shared lock
 	def __init__(self,shared_lock):
-		self.f_name = "/home/adriano/GitHub/SD/Trabalho-SistemasDitribuidos/server/server_logs.in"
-		self.f_snap = "/home/adriano/GitHub/SD/Trabalho-SistemasDitribuidos/server/server_snap.in"
+		self.f_name = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_logs.in"
+		self.f_snap = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_snap.in"
 		self.lock   = shared_lock
 #		self.queue  = queue.Queue()
 		self.queue  = []
-	
+
 	# If there is a need for timestamp this is where it should be used
 	def stack_log(self,message):
-		print("Append")
 		self.queue.append(message)
 
 	def pop_log(self):
-		print("Ready to work")
 		while True:
 			if(len(self.queue) > 0):
 				self.lock.acquire()
 
 				log = self.queue.pop(0)
-				print(log)
+				print("1 : " + str(log))
 				self.write_log(log)
-
 				self.lock.release()
 			else:
 				time.sleep(.5)	
@@ -46,9 +43,9 @@ class State_file:
 			#	break
 
 	# Operation is a stirng
-	def write_log(self,operation):
+	def write_log(self,log):
 		fd = open(self.f_name,"a+")
-		fd.write(str(operation) + "\n")
+		fd.write(str(log) + "\n")
 		fd.close()
 
 	def take_snapshot(self,state):

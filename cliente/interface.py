@@ -26,6 +26,8 @@ def ReceiveMessage():
     global cliente
     global chats
     lastindex = 0
+
+    print("Read the chat")
     while True:
         while lastindex < cliente.getchat_len():
             n = cliente.getchat(lastindex)
@@ -65,13 +67,16 @@ while not Quit:
         getinfo()
         if not cliente.Create_chatRoom(nome,password,Nickname):
             print('ERRO','Room was not Possible to Create')
+            break
         else:
+            print('Room created')
             threading.Thread(target=ReceiveMessage,daemon=True).start()
             Room()
     elif op == '2':
         getinfo()
         if not cliente.Join_to_chatRoom(nome,password, Nickname):
             print('ERRO','Room was not Possible to Join')
+            break
         else:
             threading.Thread(target=ReceiveMessage,daemon=True).start()
             Room()

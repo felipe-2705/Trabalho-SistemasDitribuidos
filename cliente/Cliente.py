@@ -21,6 +21,7 @@ class Client:
 
     def Join_to_chatRoom(self,Roomname,Password,Nickname):
         response = self.conn.JoinChat(chat.JoinChatRequest(roomname=Roomname, password=Password, nickname=Nickname))
+        print(response.state)
         if response.state == 'sucess':
             self.Nickname = Nickname
             self.Roomname = Roomname
@@ -48,7 +49,9 @@ class Client:
 
 
     def __listen_for_messages(self):
-        for note in self.conn.ReceiveMessage(chat.Note(roomname=self.Roomname, nickname=self.Nickname)):
+        print("Listen")
+        print(self.Roomname)
+        for note in self.conn.ReceiveMessage(chat.First(roomname=self.Roomname, nickname=self.Nickname)):
             self.chats.append(note)
 
     def getchat(self,index):

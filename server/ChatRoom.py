@@ -33,10 +33,11 @@ class ChatRoom():
 		else:
 			return False
 
-	def validade_user(self,nick):
-		for nick in self.Nicknames:
-			if nick == Nickname:
-				return True
+	def validate_user(self,nick):
+		print(nick)
+		print(self.Nicknames)
+		if nick in self.Nicknames:
+			return True
 		return False
 
 	def new_message(self,mesg):
