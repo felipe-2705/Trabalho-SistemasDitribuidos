@@ -34,9 +34,11 @@ class Client:
     def Create_chatRoom(self,Roomname,Password,Nickname):
         response = self.conn.CreateChat(chat.CreateChatRequest(roomname=Roomname, password=Password, nickname=Nickname))
         if response.state == 'sucess':
+            print('Sucess')
             self.Nickname = Nickname
             self.Roomname = Roomname
             self.chats.clear()
+            print('Time to fail')
             threading.Thread(target=self.__listen_for_messages,daemon=True).start()
             return True
         else:

@@ -9,7 +9,7 @@
 * ( ) Um texto de ate uma pagina explicando como e porque Log Structured Merge Trees seriam usadas no projeto;
 * Outros elementos dependerao de cada trabalho, com duas opcoes:
 	- 1 :
-		* ( ) O servidor sera particionado usando consistent hashing;
+		* (X) O servidor sera particionado usando consistent hashing;
 		* ( ) O roteamento entre pares sera feito via finger table;
 		* ( ) Os dados serao particionados usando alguma chave que os identifique;
 	- 2 :

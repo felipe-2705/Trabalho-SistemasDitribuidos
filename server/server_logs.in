@@ -35,3 +35,25 @@ ChatRoom dood: Message received from: bro
 Server: Room dood created 
 ChatRoom dood: Message received from: max
 ChatRoom dood: Message received from: max
+Server: Room dood created 
+Server: Room max created 
+Server: Room max created 
+Server: Room max created 
+Server: Room max created 
+ChatRoom max: Message received from: bro
+Server: Room max created 
+ChatRoom max: Message received from: bro
+ChatRoom max: Message received from: bro
+ChatRoom max: Message received from: bro
+Server: Room max created 
+ChatRoom max: Message received from: bro
+man joined max
+ChatRoom max: Message received from: man
+ChatRoom max: Message received from: man
+ChatRoom max: Message received from: bro
+Server: Room dood created 
+ChatRoom dood: Message received from: max
+steeb joined dood
+ChatRoom dood: Message received from: steeb
+ChatRoom dood: Message received from: steeb
+ChatRoom dood: Message received from: max
