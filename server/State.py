@@ -21,7 +21,6 @@ class State_file:
 		self.f_name = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_logs.in"
 		self.f_snap = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_snap.in"
 		self.lock   = shared_lock
-#		self.queue  = queue.Queue()
 		self.queue  = []
 
 	# If there is a need for timestamp this is where it should be used
@@ -57,20 +56,3 @@ class State_file:
 		fd.close()
 
 		self.lock.release()
-
-
-#	# Maybe this function will be changed to put a timer in the message
-#	def stack_log(self,message):
-#		self.queue.put(message)
-#
-#	def write_log_queue(self):
-#		while True:
-#			new_log = self.queue.get(timeout=.5)
-#			self.write_log(new_log)
-#			self.queue.task_done()
-#			#if :
-#			#	break
-
-#	def data_snapshot(self,operation):
-
-#	def read_file(self):

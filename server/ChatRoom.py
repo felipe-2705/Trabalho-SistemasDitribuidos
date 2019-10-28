@@ -19,8 +19,6 @@ class ChatRoom():
 		self.lock	= Lock()    ## to Block the acess to chats list
 		self.locknick	= Lock()    ## to Block Nicknames list
 
-		self.state_file = State_file(shared_lock) # Will use the received shared lock
-
 	def validate_name(self,Roomname):
 		if Roomname == self.Name:
 			return True;
@@ -52,16 +50,6 @@ class ChatRoom():
 		self.Nicknames.append(Nickname)
 		self.locknick.release()
 
-
-
-	def thread_start(self):
-		Thread(target=self.state_file.pop_log).start()		  # This thread will be responsible to write changes in the log file
-
-	def chat_snapshot(self):
-		while True:
-			tm = time.time()
-			if tm % 10 == 0:
-				print("Write")
-				state = {'time': tm,'name': self.Name,'password': self.Password,'users': self.Nicknames,'mesgs': self.Chats}
-				state_file.take_snapshot(state)
-
+	# Probably Chats is the problem
+	def to_dictionary(self):
+		return {'room' : self.Name, 'password' : self.Password,'users' : self.Nicknames,'mesgs' : self.Chats}

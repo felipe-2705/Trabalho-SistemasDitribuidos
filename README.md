@@ -5,7 +5,7 @@
 
 * (X) Toda a comunicaco devera ser substituida por gRPC;
 * (X) A operacao a ser executada deve ser definida pela funcao, nao por parametro;
-* ( ) O estado armazenado no servidor deve ser composto por log + snapshots dos dados;
+* (X) O estado armazenado no servidor deve ser composto por log + snapshots dos dados;
 * ( ) Um texto de ate uma pagina explicando como e porque Log Structured Merge Trees seriam usadas no projeto;
 * Outros elementos dependerao de cada trabalho, com duas opcoes:
 	- 1 :

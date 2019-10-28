@@ -59,6 +59,7 @@ class ChatServer(rpc.ChatSServerServicer):
 			while True:
 				while lastindex < len(aux.Chats):
 					n = aux.Chats[lastindex]
+					n = chat.Note(roomname=request.roomname, nickname=n['nickname'], message=n['message'])
 					lastindex+=1
 					yield n
 
@@ -68,7 +69,8 @@ class ChatServer(rpc.ChatSServerServicer):
 
 		aux = self.Validade_User(request.roomname,request.nickname) 
 		if aux != None:
-			aux.Chats.append(request)
+			aux.Chats.append({'nickname' : request.nickname,'message' : request.message})
+#			aux.Chats.append(request)
 			state_file.stack_log('ChatRoom ' + request.roomname + ': Message received from: ' + request.nickname)
 
 		return chat.EmptyResponse()
@@ -106,7 +108,13 @@ class ChatServer(rpc.ChatSServerServicer):
 			tm = time.time()
 			if tm % 10 == 0:
 				print("Write")
-				state = {'time': tm,'server': self.ChatRooms}
+
+				aux   = []
+				for i in self.ChatRooms:
+					aux.append(i.to_dictionary())
+				state = {'time': tm,'server': aux}
+				print(state)
+
 				state_file.take_snapshot(state)
 
 
@@ -117,7 +125,7 @@ if __name__ == '__main__':
 	state_file  = State_file(shared_lock)
 	print("Get to work bitch")
 	Thread(target=state_file.pop_log).start() # This thread will be responsible to write changes in the log file
-#	Thread(target=chatServer.server_snapshot).start()
+	Thread(target=chatServer.server_snapshot).start()
 
 	server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 	rpc.add_ChatSServerServicer_to_server(chatServer,server)
