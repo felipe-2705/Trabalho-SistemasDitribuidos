@@ -17,9 +17,9 @@ class State_file:
 	#	3 - Each cliente put a message on the list
 	#	  - Each process create a thread to write the file
 	#	  - All the process have a shared lock
-	def __init__(self,shared_lock):
-		self.f_name = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_logs.in"
-		self.f_snap = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_snap.in"
+	def __init__(self,shared_lock,s_id):
+		self.f_name = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_logs_" + str(s_id) + ".in"
+		self.f_snap = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_snap_" + str(s_id) + ".in"
 		self.lock   = shared_lock
 		self.queue  = []
 
@@ -35,6 +35,7 @@ class State_file:
 				log = self.queue.pop(0)
 				print("1 : " + str(log))
 				self.write_log(log)
+
 				self.lock.release()
 			else:
 				time.sleep(.5)	
@@ -50,9 +51,26 @@ class State_file:
 	def take_snapshot(self,state):
 		self.lock.acquire()
 
-		fd = open(self.f_snap,"a+")
+		fd = open(self.f_snap,"w+")
 		json.dump(state,fd)
 		fd.write("\n")
 		fd.close()
+		open('file.txt', 'w').close()
 
 		self.lock.release()
+
+	def read_log(self):
+		fd  = open(self.f_name,"r")
+		log = fd.readlines()
+		for i in range(len(log)):
+			log[i] = log[i].strip("\n").split(";")
+
+		return log
+
+	def read_snapshot(self):
+		fd = open(self.f_snap,"r")
+		snap = fd.readlines()
+		snap = snap[0].strip("\n")
+		snap = json.loads(snap) 
+
+		return snap
