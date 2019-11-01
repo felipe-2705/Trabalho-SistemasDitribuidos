@@ -16,13 +16,17 @@ class FingerTable:
 
 	# It keeps control of the entries in the routing table (self.servers)
 	# Seems fine
-	# Implement a return of the nodes thath might have their table changed to
+	# Change the return to be nodes that really would update their tables
 	def add_node(self,new_id,port):
 		dist      = self.distance(self.id,new_id)
 		selecteds = []
+
+		print("Table : ",self.servers)
 		for i in range(self.n):
 			aux = 2 ** i
-			if self.servers[i] != self.id: # Only nodes 'behind' the new node will have the chance to have their tables changed
+			if self.servers[i][0] == new_id:
+				return [] # Case the node is alredy on the table
+			if (self.servers[i][0] != self.id) and (self.servers[i] not in selecteds): # Only nodes 'behind' the new node will have the chance to have their tables changed
 				selecteds.append(self.servers[i])
 			if   dist < aux:
 				if i > 0:
@@ -37,11 +41,11 @@ class FingerTable:
 			if dist < self.distance(self.id,self.servers[j][0]):
 				self.servers[j] = (new_id,port)
 
+		print("Table : ",self.servers)
 		return selecteds
 
 	def responsible_node(self,roomname):
 		ident = self.room_identificator(roomname)
-#		ident = roomname
 		dist  = self.distance(self.id,ident)
 
 		# Garantee to know
@@ -85,18 +89,19 @@ class FingerTable:
 #if __name__ == '__main__':
 #	ft = FingerTable(11911)
 #
-#	ft.add_node(4,11913)
-#	ft.add_node(9,11941)
-#	ft.add_node(11,11941)
-#	ft.add_node(14,11941)
-#	ft.add_node(18,11941)
-#	ft.add_node(20,11941)
-#	ft.add_node(21,11941)
-#	ft.add_node(28,11941)
+# Add node test
+#	print(ft.add_node(4,11913))
+#	print(ft.add_node(9,11941))
+#	print(ft.add_node(11,11941))
+#	print(ft.add_node(14,11941))
+#	print(ft.add_node(18,11941))
+#	print(ft.add_node(20,11941))
+#	print(ft.add_node(21,11941))
+#	print(ft.add_node(28,11941))
 #
+# Routing test
 #	print(ft.servers)
-#
-#	for x in range(11):
+#	for x in range(32):
 #		print(x)
 #		rn = ft.responsible_node(x)
 #		print(rn)
