@@ -179,8 +179,6 @@ class ChatServer(rpc.ChatSServerServicer):
 			aux = self.Validade_User(request.roomname,request.nickname) 
 			if aux != None:
 				aux.Chats.append({'nickname' : request.nickname,'message' : request.message})
-#				aux.Chats.append(request)
-#				state_file.stack_log('ChatRoom ' + request.roomname + ': Message received from: ' + request.nickname)
 				state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
 			return chat.EmptyResponse()
 		# If this server dont know who will handle --------------------------------------------------------------------------------
@@ -195,9 +193,29 @@ class ChatServer(rpc.ChatSServerServicer):
 		return conn.SendMessage(chat.Note(roomname=request.roomname,nickname=request.nickname,message=request.message))
 
 	def Quit(self,request,context):
-		aux = self.Validade_User(request.roomname,request.nickname) 
-		if aux != None:
-			aux.Nicknames.remove(request.nickname)
+		global state_file
+
+		# Fist - try to descover who will handle the request -----------------------------------------------------------------------
+		resp_node = self.route_table.responsible_node(request.roomname)
+		room_name = request.roomname # the id of the room
+		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
+		# If this server is the one supposed to handle -----------------------------------------------------------------------------
+		if resp_serv == self.Request_port:
+			aux = self.Validade_User(request.roomname,request.nickname) 
+			if aux != None:
+				state_file.stack_log('LeftChat;' + request.nickname + ";" + request.roomname )
+				aux.Nicknames.remove(request.nickname)
+				return chat.EmptyResponse()
+		# If this server dont know who will handle --------------------------------------------------------------------------------
+		if not resp_node[0]: # Communicate with the server that might know who will respond the request
+			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+			resp_serv = result.port
+		# Server knows who will handle --------------------------------------------------------------------------------------------
+		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
+		return conn.Quit(chat.QuitRequest(roomname=request.roomname,nickname=request.nickname))
 
 	#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	def Validade_User(self,roomname,user):
@@ -271,6 +289,10 @@ class ChatServer(rpc.ChatSServerServicer):
 				for ch in self.ChatRooms:
 					if ch.Name == command[2]:
 						ch.Chats.append({'nickname' : command[1],'message' : command[3]})
+			elif command[0] == 'LeftChat':
+				for ch in self.ChatRooms:
+					if ch.Name == command[2]
+						ch.Nicknames.remove(command[1])
 
 	
 if __name__ == '__main__':
