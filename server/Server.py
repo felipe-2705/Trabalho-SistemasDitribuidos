@@ -282,8 +282,8 @@ if __name__ == '__main__':
 		chatServer.recover_state()
 	except:
 		pass
-#	Thread(target=state_file.pop_log).start()         # This thread will be responsible to write changes in the log file
-#	Thread(target=chatServer.server_snapshot).start() # This thread will be responsible to write the snapshots
+	Thread(target=state_file.pop_log).start()         # This thread will be responsible to write changes in the log file
+	Thread(target=chatServer.server_snapshot).start() # This thread will be responsible to write the snapshots
 
 	if chatServer.id != 2:
 		print("Send request")

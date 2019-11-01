@@ -49,13 +49,14 @@ class State_file:
 		fd.close()
 
 	def take_snapshot(self,state):
+
 		self.lock.acquire()
 
 		fd = open(self.f_snap,"w+")
 		json.dump(state,fd)
 		fd.write("\n")
 		fd.close()
-		open('file.txt', 'w').close()
+		open(self.f_name, 'w').close()
 
 		self.lock.release()
 
