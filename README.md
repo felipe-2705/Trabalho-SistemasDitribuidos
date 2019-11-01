@@ -10,13 +10,21 @@
 * Outros elementos dependerao de cada trabalho, com duas opcoes:
 	- 1 :
 		* (X) O servidor sera particionado usando consistent hashing;
-		* ( ) O roteamento entre pares sera feito via finger table;
-		* ( ) Os dados serao particionados usando alguma chave que os identifique;
+		* (X) O roteamento entre pares sera feito via finger table;
+		* (X) Os dados serao particionados usando alguma chave que os identifique;
 	- 2 :
 		* O servidor sera particionado usando microsservicos;
 		* Varios microsservicos srao usados no sistema;
 		* Os dados serao roteados segundo alguma tabela pre-configurada;
 
+## To do
+
+* (X) Implementar Log Structured Merge Trees
+	- (X) Acrescentar dados no arquivo de log
+	- (X) Mudar função de gearar snapshot
+	- (X) Implementar função de recuperação
+* (X) Fazer serviço para adicionar nos a rede
+* ( ) Testar os serviços acima
 
 ## Visão Geral
 

@@ -4,6 +4,19 @@ syntax = "proto3";
 
 package grpc;
 
+message NewNodeReq{
+	int32 n_id = 1;
+	int32 port = 2;
+}
+
+message FindRRequest{
+  string roomname = 1;
+}
+
+message FindRResponse{
+  string port = 1;
+}
+
 message JoinChatRequest{
   string roomname = 1;
   string password = 2;
@@ -41,6 +54,8 @@ message QuitRequest{
 
 
 service ChatSServer{
+ rpc AddNewNode(NewNodeReq) returns(EmptyResponse){}
+ rpc FindResponsible(FindRRequest) returns(FindRResponse){}
  rpc JoinChat(JoinChatRequest) returns(JoinResponse){}
  rpc CreateChat(CreateChatRequest) returns(JoinResponse){}
 

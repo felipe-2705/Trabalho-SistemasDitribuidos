@@ -16,10 +16,14 @@ class FingerTable:
 
 	# It keeps control of the entries in the routing table (self.servers)
 	# Seems fine
+	# Implement a return of the nodes thath might have their table changed to
 	def add_node(self,new_id,port):
-		dist = self.distance(self.id,new_id)
+		dist      = self.distance(self.id,new_id)
+		selecteds = []
 		for i in range(self.n):
 			aux = 2 ** i
+			if self.servers[i] != self.id: # Only nodes 'behind' the new node will have the chance to have their tables changed
+				selecteds.append(self.servers[i])
 			if   dist < aux:
 				if i > 0:
 					i = i - 1
@@ -32,6 +36,8 @@ class FingerTable:
 				self.servers[j] = (new_id,port)
 			if dist < self.distance(self.id,self.servers[j][0]):
 				self.servers[j] = (new_id,port)
+
+		return selecteds
 
 	def responsible_node(self,roomname):
 		ident = self.room_identificator(roomname)

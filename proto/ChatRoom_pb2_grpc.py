@@ -14,6 +14,16 @@ class ChatSServerStub(object):
     Args:
       channel: A grpc.Channel.
     """
+    self.AddNewNode = channel.unary_unary(
+        '/grpc.ChatSServer/AddNewNode',
+        request_serializer=ChatRoom__pb2.NewNodeReq.SerializeToString,
+        response_deserializer=ChatRoom__pb2.EmptyResponse.FromString,
+        )
+    self.FindResponsible = channel.unary_unary(
+        '/grpc.ChatSServer/FindResponsible',
+        request_serializer=ChatRoom__pb2.FindRRequest.SerializeToString,
+        response_deserializer=ChatRoom__pb2.FindRResponse.FromString,
+        )
     self.JoinChat = channel.unary_unary(
         '/grpc.ChatSServer/JoinChat',
         request_serializer=ChatRoom__pb2.JoinChatRequest.SerializeToString,
@@ -44,6 +54,20 @@ class ChatSServerStub(object):
 class ChatSServerServicer(object):
   # missing associated documentation comment in .proto file
   pass
+
+  def AddNewNode(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def FindResponsible(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
 
   def JoinChat(self, request, context):
     # missing associated documentation comment in .proto file
@@ -83,6 +107,16 @@ class ChatSServerServicer(object):
 
 def add_ChatSServerServicer_to_server(servicer, server):
   rpc_method_handlers = {
+      'AddNewNode': grpc.unary_unary_rpc_method_handler(
+          servicer.AddNewNode,
+          request_deserializer=ChatRoom__pb2.NewNodeReq.FromString,
+          response_serializer=ChatRoom__pb2.EmptyResponse.SerializeToString,
+      ),
+      'FindResponsible': grpc.unary_unary_rpc_method_handler(
+          servicer.FindResponsible,
+          request_deserializer=ChatRoom__pb2.FindRRequest.FromString,
+          response_serializer=ChatRoom__pb2.FindRResponse.SerializeToString,
+      ),
       'JoinChat': grpc.unary_unary_rpc_method_handler(
           servicer.JoinChat,
           request_deserializer=ChatRoom__pb2.JoinChatRequest.FromString,

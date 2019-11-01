@@ -25,6 +25,18 @@ class ChatServer(rpc.ChatSServerServicer):
 
 		print("Server id : ",self.route_table.id)
 
+	# It is missing a method to request the adition of a node in the route_table
+	def AddNewNode(self,request,context):
+		others = self.route_table.add_node(request.n_id,request.port)
+		if others not None:
+			for node in others:
+				channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+				conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+				conn.AddNewNode(chat.NewNodeReq(n_id=node[0],port=node[1]))
+
+		return chat.EmptyResponse()
+
+
 	def FindResponsible(self,request,context):
 		resp_node = self.route_table.responsible_node(request.roomname)
 		room_name = resp_node[1][0] # the name of the room
