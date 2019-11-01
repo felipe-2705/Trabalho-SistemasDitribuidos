@@ -6,13 +6,11 @@ import os
 
 cliente = Cliente.Client()
 
-
-
-nome=''
-password=''
-Nickname= ''
-chats = []
-Quit = False
+nome      = ''
+password  = ''
+Nickname  = ''
+chats     = []
+Quit      = False
 lock_chat = Lock()
 
 def getinfo():
@@ -20,19 +18,21 @@ def getinfo():
     global password
     global Nickname
 
-    nome = input('Room Name: ')
-    password = input('Password: ')
-    Nickname = input('Your Nickname:')
+    nome     = input('Room Name    : ')
+    password = input('Password     : ')
+    Nickname = input('Your Nickname: ')
 
 def ReceiveMessage():
     global cliente
     global chats
     lastindex = 0
+
+    print("Read the chat")
     while True:
         while lastindex < cliente.getchat_len():
             n = cliente.getchat(lastindex)
             lastindex+=1
-            mensagem= '['+ n.nickname+'] '+n.message+'\n'
+            mensagem= '['+ n.nickname+'] ' + n.message + '\n'
             lock_chat.acquire()
             chats.append(mensagem)
             lock_chat.release()
@@ -58,22 +58,25 @@ def Room():
         reprint()
 
 while not Quit:
-
+    os.system('clear')
     menu = '[1] Create Room\n[2] Join Room\n[3] Quit\n'
-    op = input(menu)
+    op   = input(menu)
     os.system('clear')
 
     if op == '1':
         getinfo()
         if not cliente.Create_chatRoom(nome,password,Nickname):
             print('ERRO','Room was not Possible to Create')
+            break
         else:
+            print('Room created')
             threading.Thread(target=ReceiveMessage,daemon=True).start()
             Room()
     elif op == '2':
         getinfo()
         if not cliente.Join_to_chatRoom(nome,password, Nickname):
             print('ERRO','Room was not Possible to Join')
+            break
         else:
             threading.Thread(target=ReceiveMessage,daemon=True).start()
             Room()

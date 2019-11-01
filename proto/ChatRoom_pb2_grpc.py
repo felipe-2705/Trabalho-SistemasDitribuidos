@@ -14,6 +14,16 @@ class ChatSServerStub(object):
     Args:
       channel: A grpc.Channel.
     """
+    self.AddNewNode = channel.unary_unary(
+        '/grpc.ChatSServer/AddNewNode',
+        request_serializer=ChatRoom__pb2.NewNodeReq.SerializeToString,
+        response_deserializer=ChatRoom__pb2.EmptyResponse.FromString,
+        )
+    self.FindResponsible = channel.unary_unary(
+        '/grpc.ChatSServer/FindResponsible',
+        request_serializer=ChatRoom__pb2.FindRRequest.SerializeToString,
+        response_deserializer=ChatRoom__pb2.FindRResponse.FromString,
+        )
     self.JoinChat = channel.unary_unary(
         '/grpc.ChatSServer/JoinChat',
         request_serializer=ChatRoom__pb2.JoinChatRequest.SerializeToString,
@@ -24,11 +34,40 @@ class ChatSServerStub(object):
         request_serializer=ChatRoom__pb2.CreateChatRequest.SerializeToString,
         response_deserializer=ChatRoom__pb2.JoinResponse.FromString,
         )
+    self.ReceiveMessage = channel.unary_stream(
+        '/grpc.ChatSServer/ReceiveMessage',
+        request_serializer=ChatRoom__pb2.First.SerializeToString,
+        response_deserializer=ChatRoom__pb2.Note.FromString,
+        )
+    self.SendMessage = channel.unary_unary(
+        '/grpc.ChatSServer/SendMessage',
+        request_serializer=ChatRoom__pb2.Note.SerializeToString,
+        response_deserializer=ChatRoom__pb2.EmptyResponse.FromString,
+        )
+    self.Quit = channel.unary_unary(
+        '/grpc.ChatSServer/Quit',
+        request_serializer=ChatRoom__pb2.QuitRequest.SerializeToString,
+        response_deserializer=ChatRoom__pb2.EmptyResponse.FromString,
+        )
 
 
 class ChatSServerServicer(object):
   # missing associated documentation comment in .proto file
   pass
+
+  def AddNewNode(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def FindResponsible(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
 
   def JoinChat(self, request, context):
     # missing associated documentation comment in .proto file
@@ -43,56 +82,6 @@ class ChatSServerServicer(object):
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
-
-
-def add_ChatSServerServicer_to_server(servicer, server):
-  rpc_method_handlers = {
-      'JoinChat': grpc.unary_unary_rpc_method_handler(
-          servicer.JoinChat,
-          request_deserializer=ChatRoom__pb2.JoinChatRequest.FromString,
-          response_serializer=ChatRoom__pb2.JoinResponse.SerializeToString,
-      ),
-      'CreateChat': grpc.unary_unary_rpc_method_handler(
-          servicer.CreateChat,
-          request_deserializer=ChatRoom__pb2.CreateChatRequest.FromString,
-          response_serializer=ChatRoom__pb2.JoinResponse.SerializeToString,
-      ),
-  }
-  generic_handler = grpc.method_handlers_generic_handler(
-      'grpc.ChatSServer', rpc_method_handlers)
-  server.add_generic_rpc_handlers((generic_handler,))
-
-
-class ChatRoomStub(object):
-  # missing associated documentation comment in .proto file
-  pass
-
-  def __init__(self, channel):
-    """Constructor.
-
-    Args:
-      channel: A grpc.Channel.
-    """
-    self.ReceiveMessage = channel.unary_stream(
-        '/grpc.ChatRoom/ReceiveMessage',
-        request_serializer=ChatRoom__pb2.EmptyResponse.SerializeToString,
-        response_deserializer=ChatRoom__pb2.Note.FromString,
-        )
-    self.SendMessage = channel.unary_unary(
-        '/grpc.ChatRoom/SendMessage',
-        request_serializer=ChatRoom__pb2.Note.SerializeToString,
-        response_deserializer=ChatRoom__pb2.EmptyResponse.FromString,
-        )
-    self.Quit = channel.unary_unary(
-        '/grpc.ChatRoom/Quit',
-        request_serializer=ChatRoom__pb2.QuitRequest.SerializeToString,
-        response_deserializer=ChatRoom__pb2.EmptyResponse.FromString,
-        )
-
-
-class ChatRoomServicer(object):
-  # missing associated documentation comment in .proto file
-  pass
 
   def ReceiveMessage(self, request, context):
     # missing associated documentation comment in .proto file
@@ -116,11 +105,31 @@ class ChatRoomServicer(object):
     raise NotImplementedError('Method not implemented!')
 
 
-def add_ChatRoomServicer_to_server(servicer, server):
+def add_ChatSServerServicer_to_server(servicer, server):
   rpc_method_handlers = {
+      'AddNewNode': grpc.unary_unary_rpc_method_handler(
+          servicer.AddNewNode,
+          request_deserializer=ChatRoom__pb2.NewNodeReq.FromString,
+          response_serializer=ChatRoom__pb2.EmptyResponse.SerializeToString,
+      ),
+      'FindResponsible': grpc.unary_unary_rpc_method_handler(
+          servicer.FindResponsible,
+          request_deserializer=ChatRoom__pb2.FindRRequest.FromString,
+          response_serializer=ChatRoom__pb2.FindRResponse.SerializeToString,
+      ),
+      'JoinChat': grpc.unary_unary_rpc_method_handler(
+          servicer.JoinChat,
+          request_deserializer=ChatRoom__pb2.JoinChatRequest.FromString,
+          response_serializer=ChatRoom__pb2.JoinResponse.SerializeToString,
+      ),
+      'CreateChat': grpc.unary_unary_rpc_method_handler(
+          servicer.CreateChat,
+          request_deserializer=ChatRoom__pb2.CreateChatRequest.FromString,
+          response_serializer=ChatRoom__pb2.JoinResponse.SerializeToString,
+      ),
       'ReceiveMessage': grpc.unary_stream_rpc_method_handler(
           servicer.ReceiveMessage,
-          request_deserializer=ChatRoom__pb2.EmptyResponse.FromString,
+          request_deserializer=ChatRoom__pb2.First.FromString,
           response_serializer=ChatRoom__pb2.Note.SerializeToString,
       ),
       'SendMessage': grpc.unary_unary_rpc_method_handler(
@@ -135,5 +144,5 @@ def add_ChatRoomServicer_to_server(servicer, server):
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
-      'grpc.ChatRoom', rpc_method_handlers)
+      'grpc.ChatSServer', rpc_method_handlers)
   server.add_generic_rpc_handlers((generic_handler,))
