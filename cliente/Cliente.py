@@ -3,6 +3,7 @@
 import threading
 import grpc
 from threading import Lock
+import multiprocessing as mp
 import sys
 sys.path.append('../')
 from proto import ChatRoom_pb2_grpc as rpc
@@ -11,6 +12,7 @@ import time
 
 address = '0.0.0.0'
 port    = 11912
+
 
 class Client:
     def __init__(self):
@@ -26,7 +28,7 @@ class Client:
             self.Nickname = Nickname
             self.Roomname = Roomname
             self.chats.clear()  ## remove any old chat that could be in the chat list
-            threading.Thread(target=self.__listen_for_messages,daemon=True).start()
+            self.start_Listenner()
             return True
         else:
             return False
@@ -38,8 +40,8 @@ class Client:
             self.Nickname = Nickname
             self.Roomname = Roomname
             self.chats.clear()
+            self.start_Listenner()
             print('Time to fail')
-            threading.Thread(target=self.__listen_for_messages,daemon=True).start()
             return True
         else:
             return False
@@ -49,10 +51,12 @@ class Client:
             n = chat.Note(roomname=self.Roomname, nickname=self.Nickname, message=Message)
             self.conn.SendMessage(n)
 
+    def start_Listenner(self):
+        self.listenner = threading.Thread(target=self.__listen_for_messages,daemon=True)
+        self.listenner.start()
 
     def __listen_for_messages(self):
         print("Listen")
-        print(self.Roomname)
         for note in self.conn.ReceiveMessage(chat.First(roomname=self.Roomname, nickname=self.Nickname)):
             self.chats.append(note)
 
@@ -62,3 +66,9 @@ class Client:
 
     def getchat_len(self):
          return len(self.chats)
+
+    def Quit(self):
+        q = chat.QuitRequest(roomname=self.Roomname,nickname = self.Nickname)
+        self.conn.Quit(q)
+        self.Roomname =''
+        self.Nickname =''

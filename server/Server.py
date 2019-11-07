@@ -115,7 +115,7 @@ class ChatServer(rpc.ChatSServerServicer):
 				res = chat.JoinResponse(state = 'sucess',Port = 0)
 				print("Done")
 
-				return res 
+				return res
 			else:
 				return chat.JoinResponse(state = 'fail',Port = 0)
 		# If this server dont know who will handle --------------------------------------------------------------------------------
@@ -145,7 +145,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
 		if resp_serv == self.Request_port:
 			lastindex = 0
-			aux = self.Validade_User(request.roomname,request.nickname) 
+			aux = self.Validade_User(request.roomname,request.nickname)
 			if aux != None:
 				while True:
 					while lastindex < len(aux.Chats):
@@ -176,7 +176,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
 		if resp_serv == self.Request_port:
-			aux = self.Validade_User(request.roomname,request.nickname) 
+			aux = self.Validade_User(request.roomname,request.nickname)
 			if aux != None:
 				aux.Chats.append({'nickname' : request.nickname,'message' : request.message})
 				state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
@@ -201,9 +201,10 @@ class ChatServer(rpc.ChatSServerServicer):
 		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
 		if resp_serv == self.Request_port:
-			aux = self.Validade_User(request.roomname,request.nickname) 
+			aux = self.Validade_User(request.roomname,request.nickname)
 			if aux != None:
 				state_file.stack_log('LeftChat;' + request.nickname + ";" + request.roomname )
+				aux.Chats.append({'nickname':request.nickname,'message' : request.nickname+' quited chat room;'})
 				aux.Nicknames.remove(request.nickname)
 				return chat.EmptyResponse()
 		# If this server dont know who will handle --------------------------------------------------------------------------------
@@ -291,10 +292,10 @@ class ChatServer(rpc.ChatSServerServicer):
 						ch.Chats.append({'nickname' : command[1],'message' : command[3]})
 			elif command[0] == 'LeftChat':
 				for ch in self.ChatRooms:
-					if ch.Name == command[2]
+					if ch.Name == command[2]:
 						ch.Nicknames.remove(command[1])
 
-	
+
 if __name__ == '__main__':
 	chatServer = ChatServer()
 

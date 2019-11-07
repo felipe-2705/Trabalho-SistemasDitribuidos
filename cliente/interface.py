@@ -6,6 +6,7 @@ import os
 
 cliente = Cliente.Client()
 
+
 nome      = ''
 password  = ''
 Nickname  = ''
@@ -46,16 +47,21 @@ def reprint():
     lock_chat.release()
 
 def Room():
+    global Quit
     while True:
         msg = input('['+Nickname+'] ' )
         if msg == '!quit':
-            break;
+            cliente.Quit()
+            Quit = True
+            return
 
         cliente.Send_message(msg)
         #lock_chat.acquire()
         #chats.append('[' +Nickname +'] '+msg)
         #lock_chat.release()
         reprint()
+
+threading.Thread(target=ReceiveMessage,daemon=True).start()
 
 while not Quit:
     os.system('clear')
@@ -70,7 +76,6 @@ while not Quit:
             break
         else:
             print('Room created')
-            threading.Thread(target=ReceiveMessage,daemon=True).start()
             Room()
     elif op == '2':
         getinfo()
@@ -78,7 +83,6 @@ while not Quit:
             print('ERRO','Room was not Possible to Join')
             break
         else:
-            threading.Thread(target=ReceiveMessage,daemon=True).start()
             Room()
     elif op == '3':
         Quit =True
