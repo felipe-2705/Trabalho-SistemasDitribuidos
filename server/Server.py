@@ -43,15 +43,16 @@ class ChatServer(rpc.ChatSServerServicer):
 
 
 	def FindResponsible(self,request,context):
-		print("Try to find",request.roomname)
+#		print("Try to find",request.roomname)
 		resp_node = self.route_table.responsible_node(request.roomname)
 		room_name = request.roomname # the name of the room
 		resp_serv = resp_node[1][1]  # port of the sever that will/might know who handle
+		print("return : ",resp_node)
 
 		if resp_node[0] :
-			print(resp_serv,"is your guy")
+#			print(resp_serv,"is your guy")
 			return chat.FindRResponse(port=resp_serv)
-		print(resp_serv,"might knows whos your guy")
+#		print(resp_serv,"might knows whos your guy")
 		channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 		conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 		return conn.FindResponsible(chat.FindRRequest(roomname=room_name))
@@ -76,8 +77,6 @@ class ChatServer(rpc.ChatSServerServicer):
 			print(resp_serv,"will treat")
 
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
-		print(room_name)
-		print(resp_serv," ",type(resp_serv))
 		if resp_serv == self.Request_port:
 			print("I handle")
 			if self.Validade_Room(request.roomname,request.password) == None:
