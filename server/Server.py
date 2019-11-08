@@ -47,7 +47,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		resp_node = self.route_table.responsible_node(request.roomname)
 		room_name = request.roomname # the name of the room
 		resp_serv = resp_node[1][1]  # port of the sever that will/might know who handle
-		print("return : ",resp_node)
+#		print("return : ",resp_node)
 
 		if resp_node[0] :
 #			print(resp_serv,"is your guy")
@@ -61,15 +61,15 @@ class ChatServer(rpc.ChatSServerServicer):
 	def CreateChat(self,request,context):
 		global state_file
 
-		print("It has begun")
+#		print("It has begun")
 		# Fist - try to descover who will handle the request -----------------------------------------------------------------------
 		resp_node = self.route_table.responsible_node(request.roomname)
-		print("return : ",resp_node)
+#		print("return : ",resp_node)
 		room_name = request.roomname # the id of the room
 		resp_serv = resp_node[1][1]  # port of the sever that will/might know who handle
 		# If this server dont know who will handle --------------------------------------------------------------------------------
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			print("I dont know who will handle")
+#			print("I dont know who will handle")
 			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
@@ -127,6 +127,7 @@ class ChatServer(rpc.ChatSServerServicer):
 				if not room.validate_user(request.nickname):
 					room.Join(request.nickname)
 #					state_file.stack_log(request.nickname + ' joined ' + request.roomname)
+					print('JoinChat;' + request.nickname + ";" + request.roomname )
 					state_file.stack_log('JoinChat;' + request.nickname + ";" + request.roomname )
 
 					return chat.JoinResponse(state = 'sucess',Port = 0)
@@ -187,6 +188,7 @@ class ChatServer(rpc.ChatSServerServicer):
 			aux = self.Validade_User(request.roomname,request.nickname)
 			if aux != None:
 				aux.Chats.append({'nickname' : request.nickname,'message' : request.message})
+				print('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
 				state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
 			return chat.EmptyResponse()
 		# Server knows who will handle --------------------------------------------------------------------------------------------
@@ -211,6 +213,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		if resp_serv == self.Request_port:
 			aux = self.Validade_User(request.roomname,request.nickname)
 			if aux != None:
+				print('LeftChat;' + request.nickname + ";" + request.roomname )
 				state_file.stack_log('LeftChat;' + request.nickname + ";" + request.roomname )
 				aux.Chats.append({'nickname':request.nickname,'message' : request.nickname+' quited chat room;'})
 				aux.Nicknames.remove(request.nickname)
@@ -307,8 +310,8 @@ if __name__ == '__main__':
 		chatServer.recover_state()
 	except:
 		pass
-#	Thread(target=state_file.pop_log).start()         # This thread will be responsible to write changes in the log file
-#	Thread(target=chatServer.server_snapshot).start() # This thread will be responsible to write the snapshots
+	Thread(target=state_file.pop_log).start()         # This thread will be responsible to write changes in the log file
+	Thread(target=chatServer.server_snapshot).start() # This thread will be responsible to write the snapshots
 
 	if chatServer.id != 2:
 		chatServer.route_table.add_node(2,11912)
