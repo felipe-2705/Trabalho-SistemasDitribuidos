@@ -18,10 +18,13 @@ class FingerTable:
 	# Seems fine
 	# Change the return to be nodes that really would update their tables
 	def add_node(self,new_id,port):
+		if ((new_id,port) in self.servers) or (new_id == self.id):
+			return []
+
 		dist      = self.distance(self.id,new_id)
 		selecteds = []
 
-		print("Table : ",self.servers)
+#		print("Table : ",self.servers)
 		for i in range(self.n):
 			aux = 2 ** i
 			if self.servers[i][0] == new_id:
@@ -41,12 +44,13 @@ class FingerTable:
 			if dist < self.distance(self.id,self.servers[j][0]):
 				self.servers[j] = (new_id,port)
 
-		print("Table : ",self.servers)
+#		print("Table : ",self.servers)
 		return selecteds
 
 	def responsible_node(self,roomname):
 		ident = self.room_identificator(roomname)
 		dist  = self.distance(self.id,ident)
+		print(ident,roomname)
 
 		# Garantee to know
 		# This order needs to be kept
@@ -68,7 +72,7 @@ class FingerTable:
 		i = i + 1
 
 		
-		if i == self.n or self.servers[i][0] != self.servers[i - 1][0]:
+		if i == self.n or (self.servers[i][0] != self.servers[i - 1][0]):
 			return(False,self.servers[i - 1])
 		# self.servers[i][0] == self.servers[i - 1][0]
 		return (True,self.servers[i])
@@ -86,8 +90,14 @@ class FingerTable:
 
 		return ident
 
-#if __name__ == '__main__':
-#	ft = FingerTable(11911)
+if __name__ == '__main__':
+	ft = FingerTable(11912)
+#	Room ids test
+	r_names = ["room11","room54","room05","room06"]
+
+	for r in r_names:
+		print(r,"->",ft.room_identificator(r))
+#
 #
 # Add node test
 #	print(ft.add_node(4,11913))
