@@ -29,75 +29,54 @@ class ChatServer(rpc.ChatSServerServicer):
 	# It is missing a method to request the adition of a node in the route_table
 	def AddNewNode(self,request,context):
 		# Add the new node to its route table
-		print("New node request")
+#		print("New node request : ",request.n_id,request.port)
 		others = self.route_table.add_node(request.n_id,request.port)
-		print(self.route_table.servers)
+#		print("New table :",self.route_table.servers)
 		# Request to some nodes of its table to add the new node
 		for node in others:
-			print("Send to ",node)
+#			print("Send to ",node)
 			channel   = grpc.insecure_channel(self.address + ':' + str(node[1]))
 			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			conn.AddNewNode(chat.NewNodeReq(n_id=node[0],port=node[1]))
+			conn.AddNewNode(chat.NewNodeReq(n_id=request.n_id,port=request.port))
 
 		return chat.EmptyResponse()
 
 
 	def FindResponsible(self,request,context):
+#		print("Try to find",request.roomname)
 		resp_node = self.route_table.responsible_node(request.roomname)
-		room_name = resp_node[1][0] # the name of the room
-		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
+		room_name = request.roomname # the name of the room
+		resp_serv = resp_node[1][1]  # port of the sever that will/might know who handle
+#		print("return : ",resp_node)
 
 		if resp_node[0] :
+#			print(resp_serv,"is your guy")
 			return chat.FindRResponse(port=resp_serv)
+#		print(resp_serv,"might knows whos your guy")
 		channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 		conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 		return conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-
-
-	# It will write in the log file
-	def JoinChat(self,request,context):
-		global state_file
-
-		# Fist - try to descover who will handle the request -----------------------------------------------------------------------
-		resp_node = self.route_table.responsible_node(request.roomname)
-		room_name = request.roomname # the name of the room
-		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
-		# If this server is the one supposed to handle -----------------------------------------------------------------------------
-		if resp_serv == self.Request_port:
-			room = self.Validade_Room(request.roomname,request.password)
-			if room != None:
-				if not room.validate_user(request.nickname):
-					room.Join(request.nickname)
-#					state_file.stack_log(request.nickname + ' joined ' + request.roomname)
-					state_file.stack_log('JoinChat;' + request.nickname + ";" + request.roomname )
-
-					return chat.JoinResponse(state = 'sucess',Port = 0)
-			return chat.JoinResponse(state = 'fail',Port = 0)
-		# If this server dont know who will handle --------------------------------------------------------------------------------
-		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
-		# Server knows who will handle --------------------------------------------------------------------------------------------
-		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
-		conn    = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-		return conn.JoinChat(chat.JoinChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
-
 
 	# It will write in the log_file
 	def CreateChat(self,request,context):
 		global state_file
 
-		print("It has begun")
+#		print("It has begun")
 		# Fist - try to descover who will handle the request -----------------------------------------------------------------------
 		resp_node = self.route_table.responsible_node(request.roomname)
-		print(resp_node)
+#		print("return : ",resp_node)
 		room_name = request.roomname # the id of the room
-		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
+		resp_serv = resp_node[1][1]  # port of the sever that will/might know who handle
+		# If this server dont know who will handle --------------------------------------------------------------------------------
+		if not resp_node[0]: # Communicate with the server that might know who will respond the request
+#			print("I dont know who will handle")
+			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+			resp_serv = result.port
+			print(resp_serv,"will treat")
+
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
-		print(room_name)
-		print(resp_serv," ",type(resp_serv))
 		if resp_serv == self.Request_port:
 			print("I handle")
 			if self.Validade_Room(request.roomname,request.password) == None:
@@ -118,21 +97,45 @@ class ChatServer(rpc.ChatSServerServicer):
 				return res
 			else:
 				return chat.JoinResponse(state = 'fail',Port = 0)
-		# If this server dont know who will handle --------------------------------------------------------------------------------
-		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			print("I know who will handle")
-			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
 		# Server knows who will handle --------------------------------------------------------------------------------------------
-		print(resp_serv)
+		print("I know who will handle")
+		print("is : ",resp_serv)
 		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 		result  = conn.CreateChat(chat.CreateChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
 		print("Finish him")
 		return result
 
+	# It will write in the log file
+	def JoinChat(self,request,context):
+		global state_file
+
+		# Fist - try to descover who will handle the request -----------------------------------------------------------------------
+		resp_node = self.route_table.responsible_node(request.roomname)
+		room_name = request.roomname # the name of the room
+		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
+		# If this server dont know who will handle --------------------------------------------------------------------------------
+		if not resp_node[0]: # Communicate with the server that might know who will respond the request
+			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+			resp_serv = result.port
+		# If this server is the one supposed to handle -----------------------------------------------------------------------------
+		if resp_serv == self.Request_port:
+			room = self.Validade_Room(request.roomname,request.password)
+			if room != None:
+				if not room.validate_user(request.nickname):
+					room.Join(request.nickname)
+#					state_file.stack_log(request.nickname + ' joined ' + request.roomname)
+					print('JoinChat;' + request.nickname + ";" + request.roomname )
+					state_file.stack_log('JoinChat;' + request.nickname + ";" + request.roomname )
+
+					return chat.JoinResponse(state = 'sucess',Port = 0)
+			return chat.JoinResponse(state = 'fail',Port = 0)
+		# Server knows who will handle --------------------------------------------------------------------------------------------
+		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+		conn    = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+		return conn.JoinChat(chat.JoinChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
 
 	# this method will run in each client to receive all messages
 	# send all new messages to clients
@@ -142,6 +145,12 @@ class ChatServer(rpc.ChatSServerServicer):
 		resp_node = self.route_table.responsible_node(request.roomname)
 		room_name = request.roomname # the id of the room
 		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
+		# If this server dont know who will handle --------------------------------------------------------------------------------
+		if not resp_node[0]: # Communicate with the server that might know who will respond the request
+			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+			resp_serv = result.port
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
 		if resp_serv == self.Request_port:
 			lastindex = 0
@@ -153,12 +162,6 @@ class ChatServer(rpc.ChatSServerServicer):
 						n = chat.Note(roomname=request.roomname, nickname=n['nickname'], message=n['message'])
 						lastindex+=1
 						yield n
-		# If this server dont know who will handle --------------------------------------------------------------------------------
-		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
 		# Server knows who will handle --------------------------------------------------------------------------------------------
 		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
@@ -174,19 +177,20 @@ class ChatServer(rpc.ChatSServerServicer):
 		resp_node = self.route_table.responsible_node(request.roomname)
 		room_name = request.roomname # the id of the room
 		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
-		# If this server is the one supposed to handle -----------------------------------------------------------------------------
-		if resp_serv == self.Request_port:
-			aux = self.Validade_User(request.roomname,request.nickname)
-			if aux != None:
-				aux.Chats.append({'nickname' : request.nickname,'message' : request.message})
-				state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
-			return chat.EmptyResponse()
 		# If this server dont know who will handle --------------------------------------------------------------------------------
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
 			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
 			resp_serv = result.port
+		# If this server is the one supposed to handle -----------------------------------------------------------------------------
+		if resp_serv == self.Request_port:
+			aux = self.Validade_User(request.roomname,request.nickname)
+			if aux != None:
+				aux.Chats.append({'nickname' : request.nickname,'message' : request.message})
+				print('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
+				state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
+			return chat.EmptyResponse()
 		# Server knows who will handle --------------------------------------------------------------------------------------------
 		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
@@ -199,20 +203,21 @@ class ChatServer(rpc.ChatSServerServicer):
 		resp_node = self.route_table.responsible_node(request.roomname)
 		room_name = request.roomname # the id of the room
 		resp_serv = resp_node[1][1] # port of the sever that will/might know who handle
-		# If this server is the one supposed to handle -----------------------------------------------------------------------------
-		if resp_serv == self.Request_port:
-			aux = self.Validade_User(request.roomname,request.nickname)
-			if aux != None:
-				state_file.stack_log('LeftChat;' + request.nickname + ";" + request.roomname )
-				aux.Chats.append({'nickname':request.nickname,'message' : request.nickname+' quited chat room;'})
-				aux.Nicknames.remove(request.nickname)
-				return chat.EmptyResponse()
 		# If this server dont know who will handle --------------------------------------------------------------------------------
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
 			channel   = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
 			resp_serv = result.port
+		# If this server is the one supposed to handle -----------------------------------------------------------------------------
+		if resp_serv == self.Request_port:
+			aux = self.Validade_User(request.roomname,request.nickname)
+			if aux != None:
+				print('LeftChat;' + request.nickname + ";" + request.roomname )
+				state_file.stack_log('LeftChat;' + request.nickname + ";" + request.roomname )
+				aux.Chats.append({'nickname':request.nickname,'message' : request.nickname+' quited chat room;'})
+				aux.Nicknames.remove(request.nickname)
+				return chat.EmptyResponse()
 		# Server knows who will handle --------------------------------------------------------------------------------------------
 		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
@@ -240,7 +245,7 @@ class ChatServer(rpc.ChatSServerServicer):
 	# Will return the id of the server that will store this data
 	def room_identificator(self,roomname):
 		result = hashlib.md5(roomname.encode())
-		ident  = int(result.hexdigest(),16) % 5
+		ident  = int(result.hexdigest(),16) % self.route_table.m
 
 		return ident
 
@@ -309,6 +314,7 @@ if __name__ == '__main__':
 	Thread(target=chatServer.server_snapshot).start() # This thread will be responsible to write the snapshots
 
 	if chatServer.id != 2:
+		chatServer.route_table.add_node(2,11912)
 		print("Send request")
 		channel   = grpc.insecure_channel(chatServer.address + ':' + str(11912))
 		conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server

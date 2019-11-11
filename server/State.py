@@ -8,15 +8,9 @@ import time
 #   https://stackoverflow.com/questions/13446445/python-multiprocessing-safely-writing-to-a-file
 class State_file:
 	# It will create the file if it doens exists
-	# Two options :
-	#	1 - Server create thread to write_log
-	#	  - Each client put a log in the queue
-	#	  - The thread will be responsible to get the log written
-	#	2 - Each cliente call a methdod to write_log directly
-	#	  - lock will be used for concurrent access
-	#	3 - Each cliente put a message on the list
-	#	  - Each process create a thread to write the file
-	#	  - All the process have a shared lock
+	#1 - Server create thread to write_log
+	#  - Each client put a log in the queue
+	#  - The thread will be responsible to get the log written
 	def __init__(self,shared_lock,s_id):
 		self.f_name = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_logs_" + str(s_id) + ".in"
 		self.f_snap = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_snap_" + str(s_id) + ".in"
@@ -31,6 +25,7 @@ class State_file:
 		while True:
 			if(len(self.queue) > 0):
 				self.lock.acquire()
+				print("Write")
 
 				log = self.queue.pop(0)
 				print("1 : " + str(log))
@@ -39,8 +34,6 @@ class State_file:
 				self.lock.release()
 			else:
 				time.sleep(.5)	
-			# if :
-			#	break
 
 	# Operation is a stirng
 	def write_log(self,log):

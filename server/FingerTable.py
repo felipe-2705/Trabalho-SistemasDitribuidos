@@ -18,6 +18,9 @@ class FingerTable:
 	# Seems fine
 	# Change the return to be nodes that really would update their tables
 	def add_node(self,new_id,port):
+		if ((new_id,port) in self.servers) or (new_id == self.id):
+			return []
+
 		dist      = self.distance(self.id,new_id)
 		selecteds = []
 
@@ -41,21 +44,23 @@ class FingerTable:
 			if dist < self.distance(self.id,self.servers[j][0]):
 				self.servers[j] = (new_id,port)
 
-		print("Table : ",self.servers)
+#		print("Table : ",self.servers)
 		return selecteds
 
 	def responsible_node(self,roomname):
+		print("Table : ",self.servers)
 		ident = self.room_identificator(roomname)
 		dist  = self.distance(self.id,ident)
+#		print(ident,roomname)
 
 		# Garantee to know
 		# This order needs to be kept
 		# First check the dist to entry 0 and the the dist to entry 1
 		if   dist == 0:
 			return (True,(self.id,self.port))
-		elif dist <= self.distance(self.id,self.servers[0][0]):
+		elif dist == 1:
 			return (True,self.servers[0])
-		elif dist <= self.distance(self.id,self.servers[1][0]):
+		elif dist == 2:
 			return (True,self.servers[1])
 
 		# The i - 1 e i + 1 is to differentiate if a node breaked or finished the loop
@@ -66,9 +71,11 @@ class FingerTable:
 				i = i - 1
 				break
 		i = i + 1
-
-		
-		if i == self.n or self.servers[i][0] != self.servers[i - 1][0]:
+		if i == self.n:
+			if self.servers[i - 1][0] == self.id:
+				return (True,self.servers[i - 1])
+			return (False,self.servers[i - 1])
+		if self.servers[i][0] != self.servers[i - 1][0]:
 			return(False,self.servers[i - 1])
 		# self.servers[i][0] == self.servers[i - 1][0]
 		return (True,self.servers[i])
@@ -87,12 +94,18 @@ class FingerTable:
 		return ident
 
 #if __name__ == '__main__':
-#	ft = FingerTable(11911)
+#	ft = FingerTable(11912)
+#	Room ids test
+#	r_names = ["room11","room54","room23","room06"]
+#
+#	for r in r_names:
+#		print(r,"->",ft.room_identificator(r))
+#
 #
 # Add node test
-#	print(ft.add_node(4,11913))
-#	print(ft.add_node(9,11941))
-#	print(ft.add_node(11,11941))
+#	print(ft.add_node(7,11913))
+#	print(ft.add_node(12,11941))
+#	print(ft.add_node(15,11941))
 #	print(ft.add_node(14,11941))
 #	print(ft.add_node(18,11941))
 #	print(ft.add_node(20,11941))
@@ -103,6 +116,6 @@ class FingerTable:
 #	print(ft.servers)
 #	for x in range(32):
 #		print(x)
-#		rn = ft.responsible_node(x)
-#		print(rn)
+#	rn = ft.responsible_node(1)
+#	print(rn)
 #		print("-------------------------")
