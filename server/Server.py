@@ -14,17 +14,31 @@ import multiprocessing as mp
 import os
 from State import *
 from FingerTable import *
+from pysyncobj import *
 
-class ChatServer(rpc.ChatSServerServicer):
+
+class ChatServer(rpc.ChatSServerServicer,SyncObj):
 	def __init__(self):
-		self.address      = '0.0.0.0' # Change to get machine ip
-		self.Request_port = int(sys.argv[1])
+		k = sys.argv[1]                 # number of replicas
+		self.address      = sys.argv[2] # get ip of first server
+		self.Request_port = int(sys.argv[3]) # get port of first server
+		n = int(k)-1                            # less one replica
+		self.replica_address = []          # array to save replicad addresses (ip,port)
+		i = 4                              # controls the argv position
+		while n > 0:
+			self.replica_address.append((sys.argv[i],sys.argv[i+1])) ## (ip,port,id)
+			i=i+1
+			n = n-1
+		end = []                        ## it will keep the string address
+		for adr in self.replica_address:
+			end.append(adr[0]+':'+adr[1])     ## 'serverIP:serverPort'
+		super(ChatServer,self).__init__(self.address+':'+str(self.Request_port),end)
 		self.route_table  = FingerTable(self.Request_port)
 		self.ChatRooms	  = []	  ## List of Rooms will attach a  note
 		self.lock	  = Lock()  ## Lock acess to critical regions
 		self.id           = self.route_table.id
-
 		print("Server id : ",self.id)
+
 
 	# It is missing a method to request the adition of a node in the route_table
 	def AddNewNode(self,request,context):
@@ -58,6 +72,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		return conn.FindResponsible(chat.FindRRequest(roomname=room_name))
 
 	# It will write in the log_file
+	@replicated
 	def CreateChat(self,request,context):
 		global state_file
 
@@ -107,6 +122,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		return result
 
 	# It will write in the log file
+	@replicated
 	def JoinChat(self,request,context):
 		global state_file
 
@@ -139,6 +155,7 @@ class ChatServer(rpc.ChatSServerServicer):
 
 	# this method will run in each client to receive all messages
 	# send all new messages to clients
+	@replicated
 	def ReceiveMessage(self,request,context):
 
 		# Fist - try to descover who will handle the request -----------------------------------------------------------------------
@@ -170,6 +187,7 @@ class ChatServer(rpc.ChatSServerServicer):
 
 
 	## method to a  client send a message to chatroom
+	@replicated
 	def SendMessage(self,request,context):
 		global state_file
 
@@ -195,6 +213,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
 		return conn.SendMessage(chat.Note(roomname=request.roomname,nickname=request.nickname,message=request.message))
+
 
 	def Quit(self,request,context):
 		global state_file

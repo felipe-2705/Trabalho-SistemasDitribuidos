@@ -7,7 +7,7 @@ class FingerTable:
 	def __init__(self,port):
 		self.m       = 32                        # max number of servers
 		self.n       = round(math.log(self.m,2)) # number of entries in the routing table
-		self.id      = port - 11910              # this server id
+		self.id      = 2              # this server id
 		self.port    = port
 		self.servers = []                        # routing table
 
