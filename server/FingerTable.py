@@ -7,7 +7,7 @@ class FingerTable:
 	def __init__(self,port):
 		self.m       = 32                        # max number of servers
 		self.n       = round(math.log(self.m,2)) # number of entries in the routing table
-		self.id      = 2 #port % 32                 # this server id
+		self.id      = port % 32                 # this server id
 		self.port    = port
 		self.servers = []                        # routing table
 
@@ -24,7 +24,6 @@ class FingerTable:
 		dist      = self.distance(self.id,new_id)
 		selecteds = []
 
-		print("Table : ",self.servers)
 		for i in range(self.n):
 			aux = 2 ** i
 			if self.servers[i][0] == new_id:
@@ -48,7 +47,6 @@ class FingerTable:
 		return selecteds
 
 	def responsible_node(self,roomname):
-		print("Table : ",self.servers)
 		ident = self.room_identificator(roomname)
 		dist  = self.distance(self.id,ident)
 #		print(ident,roomname)

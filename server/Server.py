@@ -15,14 +15,21 @@ import os
 from State import *
 from FingerTable import *
 from pysyncobj import *
+from pysyncobj.batteries import ReplDict, ReplLockManager
 
 # Obs  : ids : 29[11900] 1[11905] 5[11909]
 # argv : 1 [numero de replicas], 2 [endereco do server 1], 3 [porta do server 1], 4 [endereco do server 2], 5 [porta do server 2], ...
 class MainServer(SyncObj):
 	def __init__(self):
+		self.__counter = 0
 		self.address         = sys.argv[2]      # get ip of first server
 		self.Request_port    = int(sys.argv[3]) # get port of first server
 		self.replica_address = []               # array to save replicad addresses (ip,port)
+		self.route_table     = FingerTable(self.Request_port)
+		self.ChatRooms	     = []	        ## List of Rooms will attach a  note
+		self.lock	     = Lock()           ## Lock acess to critical regions
+		self.id              = self.route_table.id
+		self.state_file      = State_file(Lock(),self.route_table.id) 
 
 		print("Servidores replicas:")
 		n = int(sys.argv[1]) - 1                # number of replicas
@@ -36,26 +43,19 @@ class MainServer(SyncObj):
 			end.append(adr[0] + ':' + adr[1])## 'serverIP:serverPort'
 			print(adr[0] + ':' + adr[1])
 
-		super(MainServer, self).__init__(self.address + ':' + str(self.Request_port),end) # self address + list of partners addresses #init replicas
+		super(MainServer, self).__init__(self.address + ':' + str(self.Request_port - 1),end) # self address + list of partners addresses #init replicas
 
-		self.route_table  = FingerTable(self.Request_port)
-		self.ChatRooms	  = []	    ## List of Rooms will attach a  note
-		self.lock	  = Lock()  ## Lock acess to critical regions
-		self.id           = self.route_table.id
-		self.state_file   = None 
-
-#		print("Server id : ",self.id,"(",self.Request_port,")")
-		self.go_online()
+		print("Server id : ",self.id,"(",self.Request_port,")")
+		if self.id == 29:
+			self.go_online()
 
 
 	def go_online(self):
-		shared_lock = Lock()
-
-		self.state_file  = State_file(shared_lock,self.route_table.id)
 		try:
 			self.recover_state()
 		except:
 			pass
+
 		Thread(target=self.state_file.pop_log).start() # This thread will be responsible to write changes in the log file
 		Thread(target=self.server_snapshot).start()    # This thread will be responsible to write the snapshots
 
@@ -69,53 +69,60 @@ class MainServer(SyncObj):
 		server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 		rpc.add_ChatSServerServicer_to_server(ChatServer(self),server)
 		print('Starting server, Listenning ...')
-		server.add_insecure_port('[::]:' + str(self.Request_port + 1))
+		server.add_insecure_port('[::]:' + str(self.Request_port))
 		server.start()
+		while True:
+			time.sleep(3)
+#		server.wait_for_termination()
 
-		try:
-			time.sleep(86400)
-		except KeyboardInterrupt:
-			server.stop()
-
+	@replicated
 	def AddNewNode(self,request,context):
 		others = self.route_table.add_node(request.n_id,request.port)
 		return others
 
 	def FindResponsible(self,request,context):
 		resp_node = self.route_table.responsible_node(request.roomname)
+		print("Responsible",resp_node)
 		return resp_node
 
-	def CreateChat(self,request,context):
-		if self.Validade_Room(request.roomname,request.password) == None:
-			newroom = room.ChatRoom(request.roomname,request.password,self.state_file.lock) # Chatroom receive
-			newroom.Join(request.nickname)
+	# Como o pysyncobj não consegue lidar com objetos complexos (locks, estruturas requisicoes, etc...) foram criadas funcoes auxiliares que serão replicadas no lugar
+	def CreateChat(self,roomname,password,nickname):
+		if self.Validade_Room(roomname,password) == None:
+			newroom = room.ChatRoom(roomname,password) # Chatroom receive
+			newroom.Join(nickname)
 
-			self.lock.acquire()
-			self.ChatRooms.append(newroom)
-			self.lock.release()
+			print(self.__counter)
+			self.AuxCreateChat(newroom)
+			print(self.__counter)
 
-			print(newroom.Nicknames)
-			print('Server: Room ' + request.roomname + ' created ')
-			self.state_file.stack_log('Created;' + request.nickname + ";" + request.roomname + ";" + request.password)
-			res = chat.JoinResponse(state = 'sucess',Port = 0)
-			print("Done")
+			self.state_file.stack_log('Created;' + nickname + ";" + roomname + ";" + password)
 
-			return res
+			return True
 		else:
-			return chat.JoinResponse(state = 'fail',Port = 0)
+			return False
+
+	@replicated
+	def AuxCreateChat(self,newroom):
+		self.__counter += 1
+#		self.ChatRooms.append(newroom)
 
 	def JoinChat(self,request,context):
 		room = self.Validade_Room(request.roomname,request.password)
 		if room != None:
 			if not room.validate_user(request.nickname):
-				room.Join(request.nickname)
+				self.AuxJoinChat(room,request.nickname)
 				print('JoinChat;' + request.nickname + ";" + request.roomname )
 				self.state_file.stack_log('JoinChat;' + request.nickname + ";" + request.roomname )
 
 				return chat.JoinResponse(state = 'sucess',Port = 0)
 		return chat.JoinResponse(state = 'fail',Port = 0)
 
+	@replicated
+	def AuxJoinChat(room,nickname):
+		room.Join(nickname)
+
 	def ReceiveMessage(self,request,context):
+		print("Rcv")
 		lastindex = 0
 		aux = self.Validade_User(request.roomname,request.nickname)
 		if aux != None:
@@ -128,11 +135,16 @@ class MainServer(SyncObj):
 
 	def SendMessage(self,request,context):
 		aux = self.Validade_User(request.roomname,request.nickname)
+		print(aux)
 		if aux != None:
-			aux.Chats.append({'nickname' : request.nickname,'message' : request.message})
 			print('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
+			self.AuxSendMessage(aux,request.nickname,request.roomname,request.message)
 			self.state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
 		return chat.EmptyResponse()
+
+	@replicated
+	def AuxSendMessage(room,nickname,roomname,message):
+		room.Chats.append({'nickname' : request.nickname,'message' : request.message})
 
 	def Quit(self,request,context):
 		aux = self.Validade_User(request.roomname,request.nickname)
@@ -154,6 +166,7 @@ class MainServer(SyncObj):
 		return aux
 
 	def Validade_Room(self,Roomname,password):
+		print("Validate ",Roomname,password)
 		aux = None
 		self.lock.acquire()   ### multiple threas may acess this method at same time. though they cant do it currently
 		for rooms in self.ChatRooms:
@@ -172,9 +185,9 @@ class MainServer(SyncObj):
 		return self.Request_port
 
 	def server_snapshot(self):
-		time.sleep(30)
-		print("Snapshot")
+		time.sleep(5)
 		while True:
+			print("Snapshot",self.__counter)
 			aux   = []
 			for i in self.ChatRooms:
 				aux.append(i.to_dictionary())
@@ -254,12 +267,15 @@ class ChatServer(rpc.ChatSServerServicer):
 			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
 			resp_serv = result.port
-			print(resp_serv,"will treat")
 
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
 		if resp_serv == self.Request_port():
-			print("I handle")
-			return self.server.CreateChat(request,context)
+			print("I handle",request.roomname,request.password,request.nickname)
+			result = self.server.CreateChat(request.roomname,request.password,request.nickname)
+			if result :
+				return chat.JoinResponse(state = 'sucess',Port = 0)
+			else:
+				return chat.JoinResponse(state = 'fail',Port = 0)
 
 		# Server knows who will handle --------------------------------------------------------------------------------------------
 		print("I know who will handle")
@@ -284,11 +300,12 @@ class ChatServer(rpc.ChatSServerServicer):
 		if resp_serv == self.Request_port():
 			return self.server.JoinChat(request,context)
 
-		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 		return conn.JoinChat(chat.JoinChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
 
 	def ReceiveMessage(self,request,context):
+		print("Send it all")
 		resp_node = self.server.FindResponsible(request,context)
 		room_name = request.roomname
 		resp_serv = resp_node[1][1]
@@ -303,13 +320,14 @@ class ChatServer(rpc.ChatSServerServicer):
 			for mesg in self.server.ReceiveMessage(request,context):
 				yield mesg
 
-		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
 		for note in conn.ReceiveMessage(chat.First(roomname=request.roomname,nickname=request.nickname)):
 			yield note
 
 
 	def SendMessage(self,request,context):
+		print("Receive Message")
 		resp_node = self.server.FindResponsible(request,context)
 		room_name = request.roomname
 		resp_serv = resp_node[1][1]
@@ -321,9 +339,10 @@ class ChatServer(rpc.ChatSServerServicer):
 			resp_serv = result.port
 
 		if resp_serv == self.Request_port():
+			print("I handle")
 			return self.server.SendMessage(request,context)
 
-		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
 		return conn.SendMessage(chat.Note(roomname=request.roomname,nickname=request.nickname,message=request.message))
 
@@ -342,14 +361,13 @@ class ChatServer(rpc.ChatSServerServicer):
 		if resp_serv == self.Request_port():
 			return self.server.Quit(request,context)
 
-		channel = grpc.insecure_channel(self.address + ':' + str(resp_serv))
+		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
 		return conn.Quit(chat.QuitRequest(roomname=request.roomname,nickname=request.nickname))
 
 
 if __name__ == '__main__':
 	server = MainServer()
-	server.go_online()
-
-while True:
-	time.sleep(64*64*100)
+	print("Went")
+	while True:
+		time.sleep(3)

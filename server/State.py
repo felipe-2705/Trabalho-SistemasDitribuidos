@@ -25,10 +25,8 @@ class State_file:
 		while True:
 			if(len(self.queue) > 0):
 				self.lock.acquire()
-				print("Write")
 
 				log = self.queue.pop(0)
-				print("1 : " + str(log))
 				self.write_log(log)
 
 				self.lock.release()
