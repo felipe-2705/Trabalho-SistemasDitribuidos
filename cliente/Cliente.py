@@ -10,8 +10,8 @@ from proto import ChatRoom_pb2_grpc as rpc
 from proto import ChatRoom_pb2  as chat
 import time
 
-address = '0.0.0.0'
-port    = 11912
+address = '127.0.0.1'
+port    = 11901
 
 
 class Client:

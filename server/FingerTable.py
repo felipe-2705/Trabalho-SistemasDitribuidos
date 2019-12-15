@@ -7,7 +7,7 @@ class FingerTable:
 	def __init__(self,port):
 		self.m       = 32                        # max number of servers
 		self.n       = round(math.log(self.m,2)) # number of entries in the routing table
-		self.id      = 2              # this server id
+		self.id      = 2 #port % 32                 # this server id
 		self.port    = port
 		self.servers = []                        # routing table
 
@@ -96,7 +96,7 @@ class FingerTable:
 #if __name__ == '__main__':
 #	ft = FingerTable(11912)
 #	Room ids test
-#	r_names = ["room11","room54","room23","room06"]
+#	r_names = ["room86","room38","room09","room26"]
 #
 #	for r in r_names:
 #		print(r,"->",ft.room_identificator(r))

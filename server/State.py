@@ -37,6 +37,7 @@ class State_file:
 
 	# Operation is a stirng
 	def write_log(self,log):
+		print(str(log))
 		fd = open(self.f_name,"a+")
 		fd.write(str(log) + "\n")
 		fd.close()
