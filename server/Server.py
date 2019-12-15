@@ -29,13 +29,14 @@ class MainServer(SyncObj):
 		i = 4                                   # controls the argv position
 		while n > 0:
 			self.replica_address.append((sys.argv[i],sys.argv[i+1])) ## (ip,port,id)
-			print((sys.argv[i],sys.argv[i+1]))
 			i = i + 2
 			n = n - 1
 		end = []                                 ## it will keep the string address
 		for adr in self.replica_address:
 			end.append(adr[0] + ':' + adr[1])## 'serverIP:serverPort'
-#		super(MainServer, self).__init__(self.address + ':' + str(self.Request_port),end) # self address + list of partners addresses #init replicas
+			print(adr[0] + ':' + adr[1])
+
+		super(MainServer, self).__init__(self.address + ':' + str(self.Request_port),end) # self address + list of partners addresses #init replicas
 
 		self.route_table  = FingerTable(self.Request_port)
 		self.ChatRooms	  = []	    ## List of Rooms will attach a  note
@@ -43,8 +44,9 @@ class MainServer(SyncObj):
 		self.id           = self.route_table.id
 		self.state_file   = None 
 
+#		print("Server id : ",self.id,"(",self.Request_port,")")
 		self.go_online()
-		print("Server id : ",self.id,"(",self.Request_port,")")
+
 
 	def go_online(self):
 		shared_lock = Lock()
@@ -67,7 +69,7 @@ class MainServer(SyncObj):
 		server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 		rpc.add_ChatSServerServicer_to_server(ChatServer(self),server)
 		print('Starting server, Listenning ...')
-		server.add_insecure_port('[::]:' + str(self.Request_port))
+		server.add_insecure_port('[::]:' + str(self.Request_port + 1))
 		server.start()
 
 		try:
