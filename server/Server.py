@@ -21,21 +21,13 @@ from pysyncobj.batteries import ReplDict, ReplLockManager
 # argv : 1 [numero de replicas], 2 [endereco do server 1], 3 [porta do server 1], 4 [endereco do server 2], 5 [porta do server 2], ...
 class MainServer(SyncObj):
 	def __init__(self):
-		self.__counter = 0
-		self.address         = sys.argv[2]      # get ip of first server
-		self.Request_port    = int(sys.argv[3]) # get port of first server
 		self.replica_address = []               # array to save replicad addresses (ip,port)
-		self.route_table     = FingerTable(self.Request_port)
-		self.ChatRooms	     = []	        ## List of Rooms will attach a  note
-		self.lock	     = Lock()           ## Lock acess to critical regions
-		self.id              = self.route_table.id
-		self.state_file      = State_file(Lock(),self.route_table.id) 
 
 		print("Servidores replicas:")
 		n = int(sys.argv[1]) - 1                # number of replicas
 		i = 4                                   # controls the argv position
 		while n > 0:
-			self.replica_address.append((sys.argv[i],sys.argv[i+1])) ## (ip,port,id)
+			self.replica_address.append((sys.argv[i],str(int(sys.argv[i+1]) + 1))) ## (ip,port,id)
 			i = i + 2
 			n = n - 1
 		end = []                                 ## it will keep the string address
@@ -43,14 +35,22 @@ class MainServer(SyncObj):
 			end.append(adr[0] + ':' + adr[1])## 'serverIP:serverPort'
 			print(adr[0] + ':' + adr[1])
 
-		super(MainServer, self).__init__(self.address + ':' + str(self.Request_port - 1),end) # self address + list of partners addresses #init replicas
+		super(MainServer, self).__init__(sys.argv[2] + ':' + str(int(sys.argv[3]) + 1),end) # self address + list of partners addresses #init replicas
+
+		self.counter = 0
+		self.address         = sys.argv[2]      # get ip of first server
+		self.Request_port    = int(sys.argv[3]) # get port of first server
+		self.route_table     = FingerTable(self.Request_port)
+		self.ChatRooms	     = []	        ## List of Rooms will attach a  note
+		self.lock	     = Lock()           ## Lock acess to critical regions
+		self.id              = self.route_table.id
+		self.state_file      = State_file(Lock(),self.route_table.id) 
 
 		print("Server id : ",self.id,"(",self.Request_port,")")
-		if self.id == 29:
-			self.go_online()
+		self.log_creation()
 
 
-	def go_online(self):
+	def log_creation(self):
 		try:
 			self.recover_state()
 		except:
@@ -59,6 +59,16 @@ class MainServer(SyncObj):
 		Thread(target=self.state_file.pop_log).start() # This thread will be responsible to write changes in the log file
 		Thread(target=self.server_snapshot).start()    # This thread will be responsible to write the snapshots
 
+		if self.id == 29:
+			self.go_online()
+
+	def go_online(self):
+		server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+		rpc.add_ChatSServerServicer_to_server(ChatServer(self),server)
+		print('Starting server, Listenning ...')
+		server.add_insecure_port('[::]:' + str(self.Request_port))
+		server.start()
+		server.wait_for_termination()
 #		if chatServer.id != 2:
 #			chatServer.route_table.add_node(2,11901)
 #			print("Send request")
@@ -66,14 +76,6 @@ class MainServer(SyncObj):
 #			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 #			conn.AddNewNode(chat.NewNodeReq(n_id=chatServer.id,port=chatServer.Request_port))
 
-		server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-		rpc.add_ChatSServerServicer_to_server(ChatServer(self),server)
-		print('Starting server, Listenning ...')
-		server.add_insecure_port('[::]:' + str(self.Request_port))
-		server.start()
-		while True:
-			time.sleep(3)
-#		server.wait_for_termination()
 
 	@replicated
 	def AddNewNode(self,request,context):
@@ -91,9 +93,7 @@ class MainServer(SyncObj):
 			newroom = room.ChatRoom(roomname,password) # Chatroom receive
 			newroom.Join(nickname)
 
-			print(self.__counter)
 			self.AuxCreateChat(newroom)
-			print(self.__counter)
 
 			self.state_file.stack_log('Created;' + nickname + ";" + roomname + ";" + password)
 
@@ -103,8 +103,7 @@ class MainServer(SyncObj):
 
 	@replicated
 	def AuxCreateChat(self,newroom):
-		self.__counter += 1
-#		self.ChatRooms.append(newroom)
+		self.ChatRooms.append(newroom)
 
 	def JoinChat(self,request,context):
 		room = self.Validade_Room(request.roomname,request.password)
@@ -118,7 +117,7 @@ class MainServer(SyncObj):
 		return chat.JoinResponse(state = 'fail',Port = 0)
 
 	@replicated
-	def AuxJoinChat(room,nickname):
+	def AuxJoinChat(self,room,nickname):
 		room.Join(nickname)
 
 	def ReceiveMessage(self,request,context):
@@ -136,15 +135,16 @@ class MainServer(SyncObj):
 	def SendMessage(self,request,context):
 		aux = self.Validade_User(request.roomname,request.nickname)
 		print(aux)
-		if aux != None:
+		if aux != len(self.ChatRooms):
 			print('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
 			self.AuxSendMessage(aux,request.nickname,request.roomname,request.message)
 			self.state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
+
 		return chat.EmptyResponse()
 
 	@replicated
-	def AuxSendMessage(room,nickname,roomname,message):
-		room.Chats.append({'nickname' : request.nickname,'message' : request.message})
+	def AuxSendMessage(self,room,nickname,roomname,message):
+		self.ChatRooms[room].Chats.append({'nickname' : nickname,'message' : message})
 
 	def Quit(self,request,context):
 		aux = self.Validade_User(request.roomname,request.nickname)
@@ -155,6 +155,16 @@ class MainServer(SyncObj):
 			aux.Nicknames.remove(request.nickname)
 
 			return chat.EmptyResponse()
+
+	def Validade_User_Index(self,roomname,user):
+		i   = 0
+		self.lock.acquire()   ### multiple threas may acess this method at same time. though they cant do it currently
+		for rooms in self.ChatRooms:
+			if rooms.validate_name(roomname) and rooms.validate_user(user):
+				break
+			i += 1
+		self.lock.release()
+		return i
 
 	def Validade_User(self,roomname,user):
 		aux = None
@@ -187,7 +197,7 @@ class MainServer(SyncObj):
 	def server_snapshot(self):
 		time.sleep(5)
 		while True:
-			print("Snapshot",self.__counter)
+			print("Snapshot")
 			aux   = []
 			for i in self.ChatRooms:
 				aux.append(i.to_dictionary())
