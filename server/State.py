@@ -12,8 +12,8 @@ class State_file:
 	#  - Each client put a log in the queue
 	#  - The thread will be responsible to get the log written
 	def __init__(self,shared_lock,s_id):
-		self.f_name = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_logs_" + str(s_id) + ".in"
-		self.f_snap = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_snap_" + str(s_id) + ".in"
+		self.f_name = "/home/adriano/Documentos/Trabalho-SistemasDitribuidos/server/server_logs_" + str(s_id) + ".in"
+		self.f_snap = "/home/adriano/Documentos/Trabalho-SistemasDitribuidos/server/server_snap_" + str(s_id) + ".in"
 		self.lock   = shared_lock
 		self.queue  = []
 

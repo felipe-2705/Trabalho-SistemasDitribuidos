@@ -106,11 +106,11 @@ class MainServer(SyncObj):
 		self.ChatRooms.append(newroom)
 
 	def JoinChat(self,request,context):
-		room = self.Validade_Room(request.roomname,request.password)
-		if room != None:
-			if not room.validate_user(request.nickname):
-				self.AuxJoinChat(room,request.nickname)
+		room = self.Validade_Room_Index(request.roomname,request.password)
+		if room < len(self.ChatRooms):
+			if not self.ChatRooms[room].validate_user(request.nickname):
 				print('JoinChat;' + request.nickname + ";" + request.roomname )
+				self.AuxJoinChat(room,request.nickname)
 				self.state_file.stack_log('JoinChat;' + request.nickname + ";" + request.roomname )
 
 				return chat.JoinResponse(state = 'sucess',Port = 0)
@@ -118,7 +118,7 @@ class MainServer(SyncObj):
 
 	@replicated
 	def AuxJoinChat(self,room,nickname):
-		room.Join(nickname)
+		self.ChatRooms[room].Join(nickname)
 
 	def ReceiveMessage(self,request,context):
 		print("Rcv")
@@ -133,9 +133,9 @@ class MainServer(SyncObj):
 					yield n
 
 	def SendMessage(self,request,context):
-		aux = self.Validade_User(request.roomname,request.nickname)
+		aux = self.Validade_User_Index(request.roomname,request.nickname)
 		print(aux)
-		if aux != len(self.ChatRooms):
+		if aux < len(self.ChatRooms):
 			print('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
 			self.AuxSendMessage(aux,request.nickname,request.roomname,request.message)
 			self.state_file.stack_log('Message;' + request.nickname + ";" + request.roomname + ";" + request.message)
@@ -175,8 +175,18 @@ class MainServer(SyncObj):
 		self.lock.release()
 		return aux
 
+	def Validade_Room_Index(self,Roomname,password):
+		i   = 0
+		self.lock.acquire()   ### multiple threas may acess this method at same time. though they cant do it currently
+		for rooms in self.ChatRooms:
+			if rooms.validate_name(Roomname) and rooms.validate_pass(password):
+				break
+			i += 1
+		self.lock.release()
+		return i
+		
+
 	def Validade_Room(self,Roomname,password):
-		print("Validate ",Roomname,password)
 		aux = None
 		self.lock.acquire()   ### multiple threas may acess this method at same time. though they cant do it currently
 		for rooms in self.ChatRooms:
