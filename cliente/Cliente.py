@@ -10,7 +10,7 @@ from proto import ChatRoom_pb2_grpc as rpc
 from proto import ChatRoom_pb2  as chat
 import time
 
-address = '127.0.0.1'
+address = '0.0.0.0'
 port    = 11901
 
 
@@ -40,7 +40,7 @@ class Client:
             self.Nickname = Nickname
             self.Roomname = Roomname
             self.chats.clear()
-            self.start_Listenner()
+            #self.start_Listenner()
             print('Time to fail')
             return True
         else:
