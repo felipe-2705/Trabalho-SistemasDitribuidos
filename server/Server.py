@@ -84,7 +84,6 @@ class MainServer(SyncObj):
 
 	def FindResponsible(self,request,context):
 		resp_node = self.route_table.responsible_node(request.roomname)
-		print("Responsible",resp_node)
 		return resp_node
 
 	# Como o pysyncobj não consegue lidar com objetos complexos (locks, estruturas requisicoes, etc...) foram criadas funcoes auxiliares que serão replicadas no lugar
@@ -337,8 +336,24 @@ class ChatServer(rpc.ChatSServerServicer):
 			resp_serv = result.port
 
 		if resp_serv == self.Request_port():
-			for mesg in self.server.ReceiveMessage(request,context):
-				yield mesg
+			lastindex = 0
+
+			aux = None
+			while not aux:
+				aux = self.server.Validade_User(request.roomname,request.nickname)
+			print("Sol ",request.roomname,request.nickname)
+			print(aux)
+
+			if aux != None:
+				print("Room :",aux.Name)
+				while True:
+					while lastindex < len(aux.Chats):
+						print("Send")
+						n = aux.Chats[lastindex]
+						n = chat.Note(roomname=request.roomname, nickname=n['nickname'], message=n['message'])
+						lastindex+=1
+						yield n
+		print("What")
 
 		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
 		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
