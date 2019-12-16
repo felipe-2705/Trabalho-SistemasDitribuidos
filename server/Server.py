@@ -59,8 +59,7 @@ class MainServer(SyncObj):
 		Thread(target=self.state_file.pop_log).start() # This thread will be responsible to write changes in the log file
 		Thread(target=self.server_snapshot).start()    # This thread will be responsible to write the snapshots
 
-		if self.id == 29:
-			self.go_online()
+		self.go_online()
 
 	def go_online(self):
 		server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -69,12 +68,14 @@ class MainServer(SyncObj):
 		server.add_insecure_port('[::]:' + str(self.Request_port))
 		server.start()
 		server.wait_for_termination()
-#		if chatServer.id != 2:
-#			chatServer.route_table.add_node(2,11901)
-#			print("Send request")
-#			channel   = grpc.insecure_channel(chatServer.address + ':' + str(11912))
-#			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-#			conn.AddNewNode(chat.NewNodeReq(n_id=chatServer.id,port=chatServer.Request_port))
+
+		# Configure route table to deal with replicates and normal server (think if the table will be shared)
+		if chatServer.id != 0:
+			chatServer.route_table.add_node(2,11901)
+			print("Send request")
+			channel   = grpc.insecure_channel(chatServer.address + ':' + str(11912))
+			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+			conn.AddNewNode(chat.NewNodeReq(n_id=chatServer.id,port=chatServer.Request_port))
 
 
 	@replicated
@@ -405,4 +406,4 @@ if __name__ == '__main__':
 	server = MainServer()
 	print("Went")
 	while True:
-		time.sleep(3)
+		time.sleep(0.25)

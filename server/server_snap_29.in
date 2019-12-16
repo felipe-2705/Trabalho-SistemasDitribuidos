@@ -1,1 +1,1 @@
-{"server": [{"password": "a", "room": "a", "users": ["a"], "mesgs": [{"nickname": "a", "message": "ok"}, {"nickname": "a", "message": "wow"}]}], "time": 1576508048.7812912}
+{"time": 1576532469.6350455, "server": [{"room": "x", "password": "x", "users": [], "mesgs": [{"nickname": "x", "message": "how"}, {"nickname": "y", "message": "man"}, {"nickname": "x", "message": "dood"}, {"nickname": "y", "message": "y quited chat room;"}, {"nickname": "x", "message": "x quited chat room;"}]}]}

@@ -11,8 +11,7 @@ from proto import ChatRoom_pb2  as chat
 import time
 
 address = '0.0.0.0'
-port    = 11901
-
+port    = 12000
 
 class Client:
     def __init__(self):
