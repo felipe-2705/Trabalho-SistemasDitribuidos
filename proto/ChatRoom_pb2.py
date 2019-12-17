@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='grpc',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x0e\x43hatRoom.proto\x12\x04grpc\"(\n\nNewNodeReq\x12\x0c\n\x04n_id\x18\x01 \x01(\x05\x12\x0c\n\x04port\x18\x02 \x01(\x05\" \n\x0c\x46indRRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\"\x1d\n\rFindRResponse\x12\x0c\n\x04port\x18\x01 \x01(\x05\"G\n\x0fJoinChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\"I\n\x11\x43reateChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\"+\n\x05\x46irst\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\";\n\x04Note\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"\x0f\n\rEmptyResponse\"+\n\x0cJoinResponse\x12\r\n\x05state\x18\x01 \x01(\t\x12\x0c\n\x04Port\x18\x02 \x01(\x05\"1\n\x0bQuitRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t2\x8b\x03\n\x0b\x43hatSServer\x12\x35\n\nAddNewNode\x12\x10.grpc.NewNodeReq\x1a\x13.grpc.EmptyResponse\"\x00\x12<\n\x0f\x46indResponsible\x12\x12.grpc.FindRRequest\x1a\x13.grpc.FindRResponse\"\x00\x12\x37\n\x08JoinChat\x12\x15.grpc.JoinChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x12;\n\nCreateChat\x12\x17.grpc.CreateChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x12-\n\x0eReceiveMessage\x12\x0b.grpc.First\x1a\n.grpc.Note\"\x00\x30\x01\x12\x30\n\x0bSendMessage\x12\n.grpc.Note\x1a\x13.grpc.EmptyResponse\"\x00\x12\x30\n\x04Quit\x12\x11.grpc.QuitRequest\x1a\x13.grpc.EmptyResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x0e\x43hatRoom.proto\x12\x04grpc\"(\n\nNewNodeReq\x12\x0c\n\x04n_id\x18\x01 \x01(\x05\x12\x0c\n\x04port\x18\x02 \x01(\x05\" \n\x0c\x46indRRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\"\x1d\n\rFindRResponse\x12\x0c\n\x04port\x18\x01 \x01(\t\"G\n\x0fJoinChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\"I\n\x11\x43reateChatRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\"+\n\x05\x46irst\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\";\n\x04Note\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"\x0f\n\rEmptyResponse\"+\n\x0cJoinResponse\x12\r\n\x05state\x18\x01 \x01(\t\x12\x0c\n\x04Port\x18\x02 \x01(\x05\"1\n\x0bQuitRequest\x12\x10\n\x08roomname\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t2\x8b\x03\n\x0b\x43hatSServer\x12\x35\n\nAddNewNode\x12\x10.grpc.NewNodeReq\x1a\x13.grpc.EmptyResponse\"\x00\x12<\n\x0f\x46indResponsible\x12\x12.grpc.FindRRequest\x1a\x13.grpc.FindRResponse\"\x00\x12\x37\n\x08JoinChat\x12\x15.grpc.JoinChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x12;\n\nCreateChat\x12\x17.grpc.CreateChatRequest\x1a\x12.grpc.JoinResponse\"\x00\x12-\n\x0eReceiveMessage\x12\x0b.grpc.First\x1a\n.grpc.Note\"\x00\x30\x01\x12\x30\n\x0bSendMessage\x12\n.grpc.Note\x1a\x13.grpc.EmptyResponse\"\x00\x12\x30\n\x04Quit\x12\x11.grpc.QuitRequest\x1a\x13.grpc.EmptyResponse\"\x00\x62\x06proto3')
 )
 
 
@@ -104,8 +104,8 @@ _FINDRRESPONSE = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='port', full_name='grpc.FindRResponse.port', index=0,
-      number=1, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),

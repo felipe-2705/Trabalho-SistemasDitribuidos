@@ -17,37 +17,46 @@ from FingerTable import *
 from pysyncobj import *
 from pysyncobj.batteries import ReplDict, ReplLockManager
 
-# Obs  : ids : 29[11900] 1[11905] 5[11909]
+# Obs  : main cluster id[0] : 11904 11936 11968 12000
 # argv : 1 [numero de replicas], 2 [endereco do server 1], 3 [porta do server 1], 4 [endereco do server 2], 5 [porta do server 2], ...
 class MainServer(SyncObj):
 	def __init__(self):
-		self.replica_address = []               # array to save replicad addresses (ip,port)
+		self.replica_address = []                 # array to save replicad addresses (ip,port)
+		self.ft_ports        = [int(sys.argv[3])] # array passado a finger table
 
-		print("Servidores replicas:")
 		n = int(sys.argv[1]) - 1                # number of replicas
 		i = 4                                   # controls the argv position
 		while n > 0:
 			self.replica_address.append((sys.argv[i],str(int(sys.argv[i+1]) + 1))) ## (ip,port,id)
+			self.ft_ports.append(int(sys.argv[i+1]))
 			i = i + 2
 			n = n - 1
 		end = []                                 ## it will keep the string address
 		for adr in self.replica_address:
 			end.append(adr[0] + ':' + adr[1])## 'serverIP:serverPort'
-			print(adr[0] + ':' + adr[1])
 
 		super(MainServer, self).__init__(sys.argv[2] + ':' + str(int(sys.argv[3]) + 1),end) # self address + list of partners addresses #init replicas
 
-		self.counter = 0
 		self.address         = sys.argv[2]      # get ip of first server
 		self.Request_port    = int(sys.argv[3]) # get port of first server
-		self.route_table     = FingerTable(self.Request_port)
 		self.ChatRooms	     = []	        ## List of Rooms will attach a  note
 		self.lock	     = Lock()           ## Lock acess to critical regions
+
+		self.route_table     = FingerTable(self.ft_ports)
 		self.id              = self.route_table.id
 		self.state_file      = State_file(Lock(),self.route_table.id) 
 
+		#Test Route Table
+#		self.route_table.add_node(5,666)
+#		self.route_table.add_node(5,616)
+#		self.route_table.add_node(25,606)
+#		self.route_table.add_node(25,608)
+#		while True:
+#			time.sleep(10)
+
 		print("Server id : ",self.id,"(",self.Request_port,")")
-		self.log_creation()
+#		self.log_creation() # problema com log
+		self.go_online()
 
 
 	def log_creation(self):
@@ -55,13 +64,20 @@ class MainServer(SyncObj):
 			self.recover_state()
 		except:
 			pass
-
 		Thread(target=self.state_file.pop_log).start() # This thread will be responsible to write changes in the log file
 		Thread(target=self.server_snapshot).start()    # This thread will be responsible to write the snapshots
 
-		self.go_online()
-
 	def go_online(self):
+		# Colocar para os nos adicionarem o main server a sua table e requisitarem a adicao deles no main server table
+		if self.id != 0:
+			main_servers = [11904,11936,11968,12000]
+			for serv in main_servers:
+				self.route_table.add_node(0,serv)
+				channel   = grpc.insecure_channel(self.address + ':' + str(serv))
+				conn      = rpc.ChatSServerStub(channel)
+				print("send",self.id,self.Request_port)
+				conn.AddNewNode(chat.NewNodeReq(n_id=self.id,port=self.Request_port))
+
 		server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 		rpc.add_ChatSServerServicer_to_server(ChatServer(self),server)
 		print('Starting server, Listenning ...')
@@ -69,16 +85,7 @@ class MainServer(SyncObj):
 		server.start()
 		server.wait_for_termination()
 
-		# Configure route table to deal with replicates and normal server (think if the table will be shared)
-		if chatServer.id != 0:
-			chatServer.route_table.add_node(2,11901)
-			print("Send request")
-			channel   = grpc.insecure_channel(chatServer.address + ':' + str(11912))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			conn.AddNewNode(chat.NewNodeReq(n_id=chatServer.id,port=chatServer.Request_port))
-
-
-	@replicated
+	# Ideia cada servidor manda a mensagem a funcao vai adicionando em uma lista
 	def AddNewNode(self,request,context):
 		others = self.route_table.add_node(request.n_id,request.port)
 		return others
@@ -89,14 +96,12 @@ class MainServer(SyncObj):
 
 	# Como o pysyncobj não consegue lidar com objetos complexos (locks, estruturas requisicoes, etc...) foram criadas funcoes auxiliares que serão replicadas no lugar
 	def CreateChat(self,roomname,password,nickname):
+		print("Create chat")
 		if self.Validade_Room(roomname,password) == None:
 			newroom = room.ChatRoom(roomname,password) # Chatroom receive
 			newroom.Join(nickname)
-
 			self.AuxCreateChat(newroom)
-
 			self.state_file.stack_log('Created;' + nickname + ";" + roomname + ";" + password)
-
 			return True
 		else:
 			return False
@@ -252,46 +257,77 @@ class MainServer(SyncObj):
 class ChatServer(rpc.ChatSServerServicer):
 	def __init__(self,server):
 		self.server = server
- 
-	def AddNewNode(self,request,context):
-		others = self.server.AddNewNode(request,context)
-		for node in others:
-			channel   = grpc.insecure_channel(self.server.address + ':' + str(node[1]))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			conn.AddNewNode(chat.NewNodeReq(n_id=request.n_id,port=request.port))
-
-		return chat.EmptyResponse()
 
 	def Request_port(self):
 		return self.server.Request_port
 
+	def List_ports_to_str(self,ports):
+		aux = ""
+		for p in ports:
+			aux += str(p) + ";"
+		return aux
+
+	def Str_to_list_ports(self,ports):
+		aux = ports.split(";")
+		aux.pop()
+		return list(map(int,aux))
+
+	# Vai receber uma porta Finger table vai ser responsavel por manter as várias portas
+	def AddNewNode(self,request,context):
+		others = self.server.AddNewNode(request,context)
+		for tupla in others: # each tupla is an id and a list of ports
+			for node in tupla[1]: # member 1 is the list of ports
+				try:
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(node))
+					conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+					conn.AddNewNode(chat.NewNodeReq(n_id=request.n_id,port=request.port))
+				except:
+					print("Fail on AddNewNode at",node)
+		return chat.EmptyResponse()
+
+	# Recebe uma string contendo as portas responsaveis (se vier de uma requisicao) ou uma lista se vier de 
 	def FindResponsible(self,request,context):
 		resp_node = self.server.FindResponsible(request,context)
 		room_name = request.roomname # the name of the room
-		resp_serv = resp_node[1][1]  # port of the sever that will/might know who handle
+		resp_serv = resp_node[1][1]  # list of severs that will/might know who handle
 
 		if resp_node[0] :
-			return chat.FindRResponse(port=resp_serv)
-		channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-		conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-		return conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+			return chat.FindRResponse(port=self.List_ports_to_str(resp_serv))
 
+		for serv in resp_serv:
+			try:
+				channel   = grpc.insecure_channel(self.server.address + ':' + str(serv))
+				conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+				return conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+			except:
+				print("Fail FindResponsible at",serv)
+		# O que fazer quando nenhum da certo ?
+
+	#------------------------------------------------------------------------------------------------------------------------------
 	def CreateChat(self,request,context):
-		# Fist - try to descover who will handle the request -----------------------------------------------------------------------
-		resp_node = self.server.FindResponsible(request,context)
-		room_name = request.roomname # the id of the room
-		resp_serv = resp_node[1][1]  # port of the sever that will/might know who handle
+		print("Create chat")
+		resp_node = self.server.FindResponsible(request,context) # Fist - try to descover who will handle the request
+		room_name = request.roomname                             # the id of the room
+		resp_serv = resp_node[1][1]                              # list of severs that will/might know who handle
+		print(resp_serv)
 
+		# Talvez problema devido a atribuicoa resp_serv dentro do for
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
+			for serv in resp_serv:
+				try:
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(serv))
+					conn      = rpc.ChatSServerStub(channel)  # connection with the responsible server
+					result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+					resp_serv = self.Str_to_list_ports(result.port)
+					break
+				except:
+					print("False Fail Create Chat at",serv)
 
 		# If this server is the one supposed to handle -----------------------------------------------------------------------------
-		if resp_serv == self.Request_port():
+		if self.Request_port() in resp_serv:
 			print("I handle",request.roomname,request.password,request.nickname)
 			result = self.server.CreateChat(request.roomname,request.password,request.nickname)
+			print(result)
 			if result :
 				return chat.JoinResponse(state = 'sucess',Port = 0)
 			else:
@@ -300,30 +336,47 @@ class ChatServer(rpc.ChatSServerServicer):
 		# Server knows who will handle --------------------------------------------------------------------------------------------
 		print("I know who will handle")
 		print("is : ",resp_serv)
-		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-		conn    = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-		result  = conn.CreateChat(chat.CreateChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
-		print("Finish him")
+		for serv in resp_serv:
+			try:
+				channel = grpc.insecure_channel(self.server.address + ':' + str(serv))
+				conn    = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+				result  = conn.CreateChat(chat.CreateChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
+				break
+			except:
+				print("False Fail Create Chat at",serv)
+
 		return result
 
+	#------------------------------------------------------------------------------------------------------------------------------
 	def JoinChat(self,request,context):
 		resp_node = self.server.FindResponsible(request,context)
 		room_name = request.roomname
 		resp_serv = resp_node[1][1]
 
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
+			for serv in resp_serv:
+				try:
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(serv))
+					conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+					result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+					resp_serv = self.Str_to_list_ports(result.port)
+				except:
+					print("False Fail Join Chat at",serv)
 
-		if resp_serv == self.Request_port():
+		if self.Request_port() in resp_serv:
 			return self.server.JoinChat(request,context)
 
-		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-		conn    = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-		return conn.JoinChat(chat.JoinChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
+		for serv in resp_serv:
+			try:
+				channel = grpc.insecure_channel(self.server.address + ':' + str(serv))
+				conn    = rpc.ChatSServerStub(channel)
+				return conn.JoinChat(chat.JoinChatRequest(roomname=request.roomname,password=request.password,nickname=request.nickname))
+				break
+			except:
+				print("True Fail Join Chat at",serv)
+		print("What do i do ?")
 
+	#------------------------------------------------------------------------------------------------------------------------------
 	def ReceiveMessage(self,request,context):
 		print("Send it all")
 		resp_node = self.server.FindResponsible(request,context)
@@ -331,76 +384,95 @@ class ChatServer(rpc.ChatSServerServicer):
 		resp_serv = resp_node[1][1]
 
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
+			for serv in resp_serv:
+				try:
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(serv))
+					conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+					result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+					resp_serv = self.Str_to_list_ports(result.port)
+				except:
+					print("False Fai Receive Message at",serv)
 
-		if resp_serv == self.Request_port():
+		if self.Request_port() in resp_serv:
 			lastindex = 0
-
 			aux = None
 			while not aux:
 				aux = self.server.Validade_User(request.roomname,request.nickname)
-			print("Sol ",request.roomname,request.nickname)
-			print(aux)
-
 			if aux != None:
-				print("Room :",aux.Name)
 				while True:
 					while lastindex < len(aux.Chats):
-						print("Send")
 						n = aux.Chats[lastindex]
 						n = chat.Note(roomname=request.roomname, nickname=n['nickname'], message=n['message'])
 						lastindex+=1
 						yield n
 		print("What")
+		for serv in resp_serv:
+			try:
+				channel = grpc.insecure_channel(self.server.address + ':' + str(serv))
+				conn    = rpc.ChatSServerStub(channel)  ## connection with the server
+				for note in conn.ReceiveMessage(chat.First(roomname=request.roomname,nickname=request.nickname)):
+					yield note
+				break
+			except:
+				print("Error Receive Message at",serv)
 
-		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
-		for note in conn.ReceiveMessage(chat.First(roomname=request.roomname,nickname=request.nickname)):
-			yield note
-
-
+	#------------------------------------------------------------------------------------------------------------------------------
 	def SendMessage(self,request,context):
-		print("Receive Message")
 		resp_node = self.server.FindResponsible(request,context)
 		room_name = request.roomname
 		resp_serv = resp_node[1][1]
 
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
+			for serv in resp_serv:
+				try:
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
+					conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+					result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+					resp_serv = self.Str_to_list_ports(result.port)
+					break
+				except:
+					print("False Error Send Message at",serv)
 
-		if resp_serv == self.Request_port():
+		if self.Request_port() in resp_serv:
 			print("I handle")
 			return self.server.SendMessage(request,context)
 
-		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
-		return conn.SendMessage(chat.Note(roomname=request.roomname,nickname=request.nickname,message=request.message))
+		for serv in resp_serv:
+			try:
+				channel = grpc.insecure_channel(self.server.address + ':' + str(serv))
+				conn    = rpc.ChatSServerStub(channel)  ## connection with the server
+				return conn.SendMessage(chat.Note(roomname=request.roomname,nickname=request.nickname,message=request.message))
+			except:
+				print("True Error Send Message at",serv)
 
 
+	#------------------------------------------------------------------------------------------------------------------------------
 	def Quit(self,request,context):
 		resp_node = self.server.FindResponsible(request,context)
 		room_name = request.roomname
 		resp_serv = resp_node[1][1]
 
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
-			channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-			conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
-			result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
-			resp_serv = result.port
+			for serv in resp_serv:
+				try:
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
+					conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
+					result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
+					resp_serv = self.Str_to_list_ports(result.port)
+					break
+				except:
+					print("False Error Quit at",serv)
 
-		if resp_serv == self.Request_port():
+		if self.Request_port() in resp_serv:
 			return self.server.Quit(request,context)
 
-		channel = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
-		conn    = rpc.ChatSServerStub(channel)  ## connection with the server
-		return conn.Quit(chat.QuitRequest(roomname=request.roomname,nickname=request.nickname))
-
+		for serv in resp_serv:
+			try:
+				channel = grpc.insecure_channel(self.server.address + ':' + str(serv))
+				conn    = rpc.ChatSServerStub(channel)  ## connection with the server
+				return conn.Quit(chat.QuitRequest(roomname=request.roomname,nickname=request.nickname))
+			except:
+				print("True Error Quit at",serv)
 
 if __name__ == '__main__':
 	server = MainServer()
