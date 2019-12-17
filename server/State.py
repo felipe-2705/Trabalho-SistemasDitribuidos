@@ -12,8 +12,8 @@ class State_file:
 	#  - Each client put a log in the queue
 	#  - The thread will be responsible to get the log written
 	def __init__(self,shared_lock,s_id):
-		self.f_name = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_logs_" + str(s_id) + ".in"
-		self.f_snap = "/home/adriano/GitHub/Trabalho-SistemasDitribuidos/server/server_snap_" + str(s_id) + ".in"
+		self.f_name = "../server/server_logs_" + str(s_id) + ".in"
+		self.f_snap = "../server/server_snap_" + str(s_id) + ".in"
 		self.lock   = shared_lock
 		self.queue  = []
 
@@ -25,10 +25,8 @@ class State_file:
 		while True:
 			if(len(self.queue) > 0):
 				self.lock.acquire()
-				print("Write")
 
 				log = self.queue.pop(0)
-				print("1 : " + str(log))
 				self.write_log(log)
 
 				self.lock.release()
@@ -37,6 +35,7 @@ class State_file:
 
 	# Operation is a stirng
 	def write_log(self,log):
+		print(str(log))
 		fd = open(self.f_name,"a+")
 		fd.write(str(log) + "\n")
 		fd.close()

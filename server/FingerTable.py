@@ -4,33 +4,48 @@ import math
 import hashlib
 
 class FingerTable:
-	def __init__(self,port):
-		self.m       = 32                        # max number of servers
-		self.n       = round(math.log(self.m,2)) # number of entries in the routing table
-		self.id      = 2              # this server id
-		self.port    = port
-		self.servers = []                        # routing table
+	# Passar o ip das replicas
+	def __init__(self,ports):
+		port = ports[0] # first port will always be this server port
+
+		self.m            = 32                        # max number of servers
+		self.n            = round(math.log(self.m,2)) # number of entries in the routing table
+		self.id           = port % 32                 # this server id
+		self.port         = port
+		self.servers      = []                        # routing table
+		self.know_servers = ports
 
 		for i in range(self.n):
-			self.servers.append((self.id,port))
+			self.servers.append((self.id,ports))
 
 	# It keeps control of the entries in the routing table (self.servers)
-	# Seems fine
-	# Change the return to be nodes that really would update their tables
+	# entrada : id e uma porta
 	def add_node(self,new_id,port):
-		if ((new_id,port) in self.servers) or (new_id == self.id):
+#		print("Finger Table")
+#		for ix in self.servers:
+#			print(ix)
+#		print("--------------------")
+
+#		print(new_id,"x",self.id,":",port)
+		if (port in self.know_servers) or (new_id == self.id):
+#			print("Exit")
 			return []
 
 		dist      = self.distance(self.id,new_id)
 		selecteds = []
 
-		print("Table : ",self.servers)
 		for i in range(self.n):
 			aux = 2 ** i
-			if self.servers[i][0] == new_id:
-				return [] # Case the node is alredy on the table
-			if (self.servers[i][0] != self.id) and (self.servers[i] not in selecteds): # Only nodes 'behind' the new node will have the chance to have their tables changed
+			if self.servers[i][0] == new_id: # id ja estiver na tabela (agora tem a possibilidade de dar append no membro 2 [lista de portas])
+				for tupla in self.servers:
+					if tupla[0] == new_id:
+						tupla[1].append(port)
+						self.know_servers.append(port)
+				return selecteds
+
+			if (self.servers[i][0] != self.id) and (self.servers[i] not in selecteds): # Only nodes 'behind' the new node will have the chance to change tables
 				selecteds.append(self.servers[i])
+
 			if   dist < aux:
 				if i > 0:
 					i = i - 1
@@ -40,18 +55,16 @@ class FingerTable:
 
 		for j in range(i + 1):
 			if self.servers[j][0] == self.id:
-				self.servers[j] = (new_id,port)
+				self.servers[j] = (new_id,[port])
 			if dist < self.distance(self.id,self.servers[j][0]):
-				self.servers[j] = (new_id,port)
+				self.servers[j] = (new_id,[port])
 
-#		print("Table : ",self.servers)
 		return selecteds
+		## Tupla com id e lista de portas
 
 	def responsible_node(self,roomname):
-		print("Table : ",self.servers)
 		ident = self.room_identificator(roomname)
 		dist  = self.distance(self.id,ident)
-#		print(ident,roomname)
 
 		# Garantee to know
 		# This order needs to be kept
@@ -94,10 +107,11 @@ class FingerTable:
 		return ident
 
 #if __name__ == '__main__':
-#	ft = FingerTable(11912)
 #	Room ids test
-#	r_names = ["room11","room54","room23","room06"]
-#
+#	ft = FingerTable([1])
+#	r_names = ["room","r00m","ro0m","r0om"]
+#	ro0m
+#	r0om
 #	for r in r_names:
 #		print(r,"->",ft.room_identificator(r))
 #

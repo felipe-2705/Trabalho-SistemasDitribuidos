@@ -14,7 +14,7 @@ message FindRRequest{
 }
 
 message FindRResponse{
-  int32 port = 1;
+  string port = 1;
 }
 
 message JoinChatRequest{
