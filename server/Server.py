@@ -425,7 +425,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
 			for serv in resp_serv:
 				try:
-					channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(serv))
 					conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 					result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
 					resp_serv = self.Str_to_list_ports(result.port)
@@ -455,7 +455,7 @@ class ChatServer(rpc.ChatSServerServicer):
 		if not resp_node[0]: # Communicate with the server that might know who will respond the request
 			for serv in resp_serv:
 				try:
-					channel   = grpc.insecure_channel(self.server.address + ':' + str(resp_serv))
+					channel   = grpc.insecure_channel(self.server.address + ':' + str(serv))
 					conn      = rpc.ChatSServerStub(channel)  ## connection with the responsible server
 					result    = conn.FindResponsible(chat.FindRRequest(roomname=room_name))
 					resp_serv = self.Str_to_list_ports(result.port)
